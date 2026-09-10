@@ -97,7 +97,9 @@ if [[ "$NEW_VER" != "$CUR_VER" ]]; then
 fi
 
 run git add -A
-run git commit -q -m "release: $TAG"
+if [[ -n "$(git diff --cached --name-only)" ]]; then
+  run git commit -q -m "release: $TAG"
+fi
 run git tag "$TAG"
 run git push -q origin main
 run git push -q origin "$TAG"
