@@ -23,12 +23,20 @@ jobs:
           - { runner: macos-13, arch: x86_64, suffix: darwin-x64 }
 
     steps:
-      - name: Checkout with backend submodule
-        uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v7
         with:
           fetch-depth: 1
-          submodules: recursive
-          token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+
+      - name: Checkout luma-backend submodule
+        shell: bash
+        run: |
+          TOKEN="${GH_PAT:-$GITHUB_TOKEN}"
+          git -c "url.https://x-access-token:${TOKEN}@github.com/.insteadOf=https://github.com/" \
+            submodule update --init --recursive
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+          GITHUB_TOKEN: ${{ github.token }}
 
       - name: Install uv
         uses: astral-sh/setup-uv@v5
@@ -59,7 +67,7 @@ jobs:
           FFMPEG_DIR=/tmp/ffbin ./build_macos.sh ${{ matrix.arch }}
 
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -98,7 +106,7 @@ jobs:
           ls -lh dist
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: luma-${{ matrix.suffix }}
           path: dist/*
@@ -112,7 +120,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: dist
 
