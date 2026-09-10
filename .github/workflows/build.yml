@@ -101,15 +101,18 @@ jobs:
       - name: Free disk space before packaging
         shell: bash
         run: |
-          # The .app bundle is already assembled; drop big intermediate dirs so
-          # hdiutil (which needs ~2x the bundle size for UDZO) doesn't run out
-          # of space on the hosted runners.
+          # The .app bundle is already assembled; hdiutil UDZO needs ~2x the
+          # bundle size on top of the workspace, and hosted runners run tight.
+          # Drop big intermediates from both the workspace and the tool caches
+          # that share the same volume.
           rm -rf node_modules
           rm -rf src-tauri/target/release/build src-tauri/target/release/deps \
                  src-tauri/target/release/.fingerprint src-tauri/target/release/incremental \
                  src-tauri/target/debug
-          rm -rf luma-backend/.venv luma-backend/build luma-backend/dist luma-backend/ffmpeg \
-                 luma-backend/ffprobe 2>/dev/null || true
+          rm -rf luma-backend/.venv luma-backend/build luma-backend/luma.egg-info \
+                 luma-backend/ffmpeg luma-backend/ffprobe 2>/dev/null || true
+          rm -rf "${UV_CACHE_DIR:-/Users/runner/work/_temp/setup-uv-cache}" 2>/dev/null || true
+          rm -rf "$HOME/.cargo/registry" "$HOME/.cargo/git" "$HOME/.cache" 2>/dev/null || true
           df -h "$(pwd)" | tail -1
 
       - name: Package DMG and ZIP
