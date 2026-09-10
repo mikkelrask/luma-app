@@ -37,7 +37,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v6
         with:
-          cache: false
+          enable-cache: false
 
       - name: Install luma CLI and PyInstaller (venv)
         working-directory: luma-backend
