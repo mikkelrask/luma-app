@@ -146,9 +146,12 @@ jobs:
         uses: actions/download-artifact@v8
         with:
           path: dist
+          merge-multiple: true
 
       - name: Draft release
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/*/*
+          files: |
+            dist/*.dmg
+            dist/*.zip
           generate_release_notes: true
