@@ -98,6 +98,17 @@ jobs:
           # recurses into the payload and fails on the Python.framework layout.
           codesign --force --sign - "$APP/Contents/MacOS/luma-sidecar"
 
+      - name: Smoke-test sidecar in bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP="src-tauri/target/release/bundle/macos/luma.app"
+          S="$APP/Contents/MacOS/luma-sidecar"
+          "$S" --help >/dev/null
+          "$S" ingest --help >/dev/null
+          "$S" reports --help >/dev/null
+          echo "sidecar smoke OK"
+
       - name: Free disk space before packaging
         shell: bash
         run: |
