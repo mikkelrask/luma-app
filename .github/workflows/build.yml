@@ -98,6 +98,20 @@ jobs:
           # recurses into the payload and fails on the Python.framework layout.
           codesign --force --sign - "$APP/Contents/MacOS/luma-sidecar"
 
+      - name: Free disk space before packaging
+        shell: bash
+        run: |
+          # The .app bundle is already assembled; drop big intermediate dirs so
+          # hdiutil (which needs ~2x the bundle size for UDZO) doesn't run out
+          # of space on the hosted runners.
+          rm -rf node_modules
+          rm -rf src-tauri/target/release/build src-tauri/target/release/deps \
+                 src-tauri/target/release/.fingerprint src-tauri/target/release/incremental \
+                 src-tauri/target/debug
+          rm -rf luma-backend/.venv luma-backend/build luma-backend/dist luma-backend/ffmpeg \
+                 luma-backend/ffprobe 2>/dev/null || true
+          df -h "$(pwd)" | tail -1
+
       - name: Package DMG and ZIP
         shell: bash
         run: |
