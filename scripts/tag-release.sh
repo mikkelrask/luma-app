@@ -107,7 +107,10 @@ run git push -q origin "$TAG"
 if [[ "$WATCH" == "1" && "$DRY_RUN" == "0" ]]; then
   log "watching CI build for $TAG..."
   sleep 6
-  RUN_ID="$(gh run list --branch main --limit 1 --json databaseId --jq '.[0].databaseId' 2>/dev/null || true)"
+  RUN_ID="$(gh run list --branch "$TAG" --limit 1 --json databaseId --jq '.[0].databaseId' 2>/dev/null || true)"
+  if [[ -z "$RUN_ID" ]]; then
+    RUN_ID="$(gh run list --limit 1 --json databaseId --jq '.[0].databaseId' 2>/dev/null || true)"
+  fi
   if [[ -n "$RUN_ID" ]]; then
     gh run watch "$RUN_ID" --exit-status -i 20 || true
   else
