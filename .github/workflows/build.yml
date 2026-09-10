@@ -13,14 +13,10 @@ concurrency:
 
 jobs:
   build:
-    name: Build (${{ matrix.suffix }})
-    runs-on: ${{ matrix.runner }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - { runner: macos-14, arch: arm64, suffix: darwin-arm64 }
-          - { runner: macos-13, arch: x86_64, suffix: darwin-x64 }
+    name: Build
+    # Apple-Silicon only. GitHub's hosted Intel (macos-13) runners are being
+    # retired and stall in the queue; re-add the x86_64 entry if needed.
+    runs-on: macos-14
 
     steps:
       - name: Checkout
@@ -39,7 +35,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v6
 
       - name: Install luma CLI and PyInstaller (venv)
         working-directory: luma-backend
@@ -64,7 +60,7 @@ jobs:
         working-directory: luma-backend
         run: |
           export PATH="$PWD/.venv/bin:$PATH"
-          FFMPEG_DIR=/tmp/ffbin ./build_macos.sh ${{ matrix.arch }}
+          FFMPEG_DIR=/tmp/ffbin ./build_macos.sh arm64
 
       - name: Set up Node
         uses: actions/setup-node@v7
@@ -108,14 +104,14 @@ jobs:
           set -euo pipefail
           APP="src-tauri/target/release/bundle/macos/luma.app"
           mkdir -p dist
-          ditto -c -k --keepParent "$APP" "dist/luma-${{ matrix.suffix }}.zip"
-          hdiutil create -volname luma -srcfolder "$APP" -ov -format UDZO "dist/luma-${{ matrix.suffix }}.dmg"
+          ditto -c -k --keepParent "$APP" "dist/luma-darwin-arm64.zip"
+          hdiutil create -volname luma -srcfolder "$APP" -ov -format UDZO "dist/luma-darwin-arm64.dmg"
           ls -lh dist
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
-          name: luma-${{ matrix.suffix }}
+          name: luma-darwin-arm64
           path: dist/*
           if-no-files-found: error
           retention-days: 30
