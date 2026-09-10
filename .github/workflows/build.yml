@@ -86,14 +86,19 @@ jobs:
       - name: Build Tauri app bundle
         run: npm run tauri -- build --bundles app
 
-      - name: Inject sidecar payload and sign
+      - name: Inject sidecar payload
         shell: bash
         run: |
           set -euo pipefail
           APP="src-tauri/target/release/bundle/macos/luma.app"
           test -d "$APP"
           cp -R src-tauri/binaries/_internal "$APP/Contents/MacOS/_internal"
-          codesign --force --deep --sign - "$APP"
+          # Ad-hoc sign only the top-level executables. Deep-signing the whole
+          # bundle recurses into the PyInstaller payload and fails on the
+          # Python.framework layout, and the bundled payload already runs
+          # unsigned (PyInstaller's macOS binaries are not code-signed).
+          codesign --force --sign - "$APP/Contents/MacOS/luma"
+          codesign --force --sign - "$APP/Contents/MacOS/luma-sidecar"
 
       - name: Package DMG and ZIP
         shell: bash
