@@ -7,6 +7,8 @@
     "core:default",
     "opener:default",
     "process:default",
+    "dialog:default",
+    "notification:default",
     {
       "identifier": "shell:allow-spawn",
       "allow": [

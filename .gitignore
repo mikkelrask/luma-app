@@ -12,6 +12,13 @@ dist
 dist-ssr
 *.local
 
+# Generated Python sidecar (PyInstaller onedir + launcher)
+src-tauri/binaries
+
+# Alternate package manager lockfiles
+pnpm-lock.yaml
+pnpm-workspace.yaml
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

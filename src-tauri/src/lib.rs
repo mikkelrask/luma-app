@@ -1,5 +1,5 @@
+use std::collections::HashMap;
 use std::sync::Mutex;
-use std::sync::atomic::{AtomicBool, Ordering};
 
 use serde_json::Value;
 use tauri::{AppHandle, Emitter, Manager, State};
@@ -19,9 +19,10 @@ struct StatusPayload {
     message: String,
 }
 
+/// Holds all currently-running sidecar children. Children are keyed by their
+/// client-provided `token` so multiple concurrent jobs never interfere.
 struct ChildState {
-    active: Mutex<Option<CommandChild>>,
-    running: AtomicBool,
+    active: Mutex<HashMap<String, CommandChild>>,
 }
 
 /// Builds the argv for a luma invocation.
@@ -39,33 +40,29 @@ fn build_argv(args: &[String], progress: bool) -> Vec<String> {
     argv
 }
 
-/// Launch a luma sidecar job in the background, streaming NDJSON progress
-/// events to the frontend and emitting a final result event.
+/// Launch a luma sidecar job in the background, streaming NDJSON events to the
+/// frontend. Every event is wrapped with the job's numeric id so the frontend
+/// can route events to the correct job, even when multiple run concurrently.
 #[tauri::command]
 fn run_luma(
     app: AppHandle,
     state: State<'_, ChildState>,
     args: Vec<String>,
     progress: bool,
+    token: String,
 ) -> Result<JobStarted, String> {
-    if let Some(child) = state.active.lock().unwrap().take() {
-        let _ = child.kill();
-        state.running.store(false, Ordering::SeqCst);
-    }
-
     let sidecar = app
         .shell()
         .sidecar("luma-sidecar")
         .map_err(|e| format!("Failed to locate luma sidecar: {e}"))?;
 
     let argv = build_argv(&args, progress);
-    let (mut rx, child) = sidecar
-        .args(&argv)
-        .spawn()
-        .map_err(|e| format!("Failed to spawn luma sidecar: {e}"))?;
+    let (mut rx, child) = match sidecar.args(&argv).spawn() {
+        Ok(x) => x,
+        Err(e) => return Err(format!("Failed to spawn luma sidecar: {e}")),
+    };
 
-    *state.active.lock().unwrap() = Some(child);
-    state.running.store(true, Ordering::SeqCst);
+    state.active.lock().unwrap().insert(token.clone(), child);
 
     let app = app.clone();
     tauri::async_runtime::spawn(async move {
@@ -79,29 +76,30 @@ fn run_luma(
                     }
                     match serde_json::from_str::<Value>(trimmed) {
                         Ok(value) => {
-                            let _ = app.emit("luma://job", value);
+                            let wrapped = serde_json::json!({ "job": token, "data": value });
+                            let _ = app.emit("luma://job", wrapped);
                         }
                         Err(_) => {
-                            let _ = app.emit("luma://log", Value::String(trimmed.to_string()));
+                            let wrapped = serde_json::json!({ "job": token, "line": trimmed });
+                            let _ = app.emit("luma://log", wrapped);
                         }
                     }
                 }
                 CommandEvent::Stderr(line_bytes) => {
                     let line = String::from_utf8_lossy(&line_bytes);
-                    let _ = app.emit("luma://log", Value::String(line.trim().to_string()));
+                    let wrapped = serde_json::json!({ "job": token, "line": line.trim() });
+                    let _ = app.emit("luma://log", wrapped);
                 }
                 CommandEvent::Terminated(payload) => {
-                    let _ = app.emit("luma://terminated", payload.code);
+                    let wrapped = serde_json::json!({ "job": token, "code": payload.code });
+                    let _ = app.emit("luma://terminated", wrapped);
                 }
                 _ => {}
             }
         }
-        {
-            let state = app.state::<ChildState>();
-            *state.active.lock().unwrap() = None;
-            state.running.store(false, Ordering::SeqCst);
-        }
-        let _ = app.emit("luma://exit", Value::Null);
+        let state = app.state::<ChildState>();
+        state.active.lock().unwrap().remove(&token);
+        let _ = app.emit("luma://exit", serde_json::json!({ "job": token }));
     });
 
     Ok(JobStarted {
@@ -110,35 +108,54 @@ fn run_luma(
     })
 }
 
-/// Kill any currently running luma sidecar job.
+/// Kill a specific running luma sidecar job by its token.
 #[tauri::command]
-fn kill_luma(state: State<'_, ChildState>) -> StatusPayload {
-    let child = state.active.lock().unwrap().take();
+fn kill_luma(state: State<'_, ChildState>, token: String) -> StatusPayload {
+    let child = state.active.lock().unwrap().remove(&token);
     match child {
         Some(child) => {
             let _ = child.kill();
-            state.running.store(false, Ordering::SeqCst);
             StatusPayload {
                 ok: true,
-                message: "Job terminated".to_string(),
+                message: format!("Job {token} terminated"),
             }
         }
         None => StatusPayload {
             ok: true,
-            message: "No job running".to_string(),
+            message: format!("No running job {token}"),
         },
     }
 }
 
-/// Report whether a job is currently running.
+/// Report how many jobs are currently running.
 #[tauri::command]
 fn luma_running(state: State<'_, ChildState>) -> StatusPayload {
+    let count = state.active.lock().unwrap().len();
     StatusPayload {
-        ok: state.running.load(Ordering::SeqCst),
-        message: if state.running.load(Ordering::SeqCst) {
-            "running".to_string()
+        ok: count > 0,
+        message: if count > 0 {
+            format!("{count} job(s) running")
         } else {
             "idle".to_string()
+        },
+    }
+}
+
+/// Kill every running luma sidecar job (used to clear orphaned jobs after a
+/// frontend reload loses track of them).
+#[tauri::command]
+fn kill_all_luma(state: State<'_, ChildState>) -> StatusPayload {
+    let mut active = state.active.lock().unwrap();
+    let count = active.len();
+    for (_, child) in active.drain() {
+        let _ = child.kill();
+    }
+    StatusPayload {
+        ok: true,
+        message: if count > 0 {
+            format!("{count} job(s) terminated")
+        } else {
+            "no jobs running".to_string()
         },
     }
 }
@@ -148,12 +165,13 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_notification::init())
         .manage(ChildState {
-            active: Mutex::new(None),
-            running: AtomicBool::new(false),
+            active: Mutex::new(HashMap::new()),
         })
-        .invoke_handler(tauri::generate_handler![run_luma, kill_luma, luma_running])
+        .invoke_handler(tauri::generate_handler![run_luma, kill_luma, luma_running, kill_all_luma])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { runLuma } from "../lib/luma";
-import { Card, CardContent, CardHeader, CardTitle, Badge } from "../components/ui/card";
-import { Button } from "../components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface Production {
   name: string;
@@ -11,7 +12,7 @@ interface Production {
 const statusColor: Record<string, string> = {
   active: "bg-emerald-500/15 text-emerald-300",
   upcoming: "bg-amber-500/15 text-amber-300",
-  archived: "bg-zinc-600/20 text-zinc-400",
+  archived: "bg-white/[0.06] text-muted-foreground",
 };
 
 export function Dashboard() {
@@ -26,10 +27,18 @@ export function Dashboard() {
     try {
       const s = await runLuma(["status"], false);
       const sr = await s.done;
+      if (sr.code && sr.code !== 0) {
+        setError(sr.logs.join("\n") || "Failed to load status");
+        return;
+      }
       setStatus(sr.payload as Record<string, Production[]> | null);
 
-      const st = await runLuma(["storage"], false);
+      const st = await runLuma(["storage", "--all"], false);
       const str = await st.done;
+      if (str.code && str.code !== 0) {
+        setError(str.logs.join("\n") || "Failed to load storage");
+        return;
+      }
       setStorage(str.payload as Record<string, unknown> | null);
     } catch (e) {
       setError(String(e));
@@ -73,12 +82,12 @@ export function Dashboard() {
               </CardHeader>
               <CardContent className="space-y-2">
                 {items.length === 0 && (
-                  <p className="text-sm text-zinc-500">None</p>
+                  <p className="text-sm text-muted-foreground/70">None</p>
                 )}
                 {items.map((p) => (
                   <div
                     key={p.name as string}
-                    className="flex items-center justify-between rounded-md border border-zinc-800 bg-zinc-950 px-3 py-2"
+                    className="flex items-center justify-between rounded-lg border border-border bg-background/60 px-3 py-2"
                   >
                     <span className="text-sm">{p.name as string}</span>
                     <Badge className={statusColor[g.key]}>{g.label}</Badge>
@@ -96,11 +105,11 @@ export function Dashboard() {
         </CardHeader>
         <CardContent>
           {storage ? (
-            <pre className="overflow-x-auto rounded-md bg-zinc-950 p-4 text-xs text-zinc-300">
+            <pre className="overflow-x-auto rounded-lg bg-background/60 p-4 text-xs text-muted-foreground">
               {JSON.stringify(storage, null, 2)}
             </pre>
           ) : (
-            <p className="text-sm text-zinc-500">No storage data.</p>
+            <p className="text-sm text-muted-foreground/70">No storage data.</p>
           )}
         </CardContent>
       </Card>

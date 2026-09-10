@@ -1,7 +1,15 @@
 import { useEffect, useState } from "react";
-import { Button } from "../components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
-import { Input, Label, Select } from "../components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useLumaJob } from "../lib/useLumaJob";
 import { runLuma } from "../lib/luma";
 
@@ -38,6 +46,7 @@ const emptyForm = {
 export function Profiles() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [form, setForm] = useState({ ...emptyForm });
+  const [deleteName, setDeleteName] = useState("");
   const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
   const load = async () => {
@@ -68,11 +77,21 @@ export function Profiles() {
       if (form.extension) args.push("--extension", form.extension);
       return args;
     },
-    false,
+    {
+      progress: false,
+      kind: "profiles",
+      label: `Create profile · ${form.name || "Unnamed"}`,
+    },
   );
 
-  const deleteJob = useLumaJob(() => ["profiles", "delete", "--name", deleteName, "--yes"], false);
-  const [deleteName, setDeleteName] = useState("");
+  const deleteJob = useLumaJob(
+    () => ["profiles", "delete", "--name", deleteName, "--yes"],
+    {
+      progress: false,
+      kind: "profiles",
+      label: `Delete profile · ${deleteName || "?"}`,
+    },
+  );
 
   const handleCreate = async () => {
     await createJob.run();
@@ -106,25 +125,39 @@ export function Profiles() {
             </div>
             <div>
               <Label>Container</Label>
-              <Select value={form.container} onChange={(e) => set("container", e.target.value)}>
-                <option value="">…</option>
-                <option value="mp4">mp4</option>
-                <option value="mov">mov</option>
-                <option value="mxf">mxf</option>
+              <Select value={form.container} onValueChange={(v) => set("container", v)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="…" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="mp4">mp4</SelectItem>
+                  <SelectItem value="mov">mov</SelectItem>
+                  <SelectItem value="mxf">mxf</SelectItem>
+                </SelectContent>
               </Select>
             </div>
             <div>
               <Label>Mode</Label>
-              <Select value={form.mode} onChange={(e) => set("mode", e.target.value)}>
-                <option value="single_file">single_file</option>
-                <option value="multi_file">multi_file</option>
+              <Select value={form.mode} onValueChange={(v) => set("mode", v)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="single_file">single_file</SelectItem>
+                  <SelectItem value="multi_file">multi_file</SelectItem>
+                </SelectContent>
               </Select>
             </div>
             <div>
               <Label>Container mode</Label>
-              <Select value={form.container_mode} onChange={(e) => set("container_mode", e.target.value)}>
-                <option value="op1a">OP1a</option>
-                <option value="opatom">OP-Atom</option>
+              <Select value={form.container_mode} onValueChange={(v) => set("container_mode", v)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="op1a">OP1a</SelectItem>
+                  <SelectItem value="opatom">OP-Atom</SelectItem>
+                </SelectContent>
               </Select>
             </div>
             <div>
@@ -169,7 +202,7 @@ export function Profiles() {
             </div>
           </CardContent>
           <Card className="mx-5 mb-5 flex flex-row items-center gap-2 border-0 bg-transparent p-0 shadow-none">
-            <Button variant="primary" className="flex-1" onClick={handleCreate} disabled={createJob.ui.running || !form.name}>
+            <Button variant="default" className="flex-1" onClick={handleCreate} disabled={createJob.ui.running || !form.name}>
               {createJob.ui.running ? "Creating…" : "Create"}
             </Button>
           </Card>
@@ -181,14 +214,14 @@ export function Profiles() {
               <CardTitle>Saved profiles</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              {profiles.length === 0 && <p className="text-sm text-zinc-500">No profiles yet.</p>}
+              {profiles.length === 0 && <p className="text-sm text-muted-foreground/70">No profiles yet.</p>}
               {profiles.map((p) => (
-                <div key={p.name} className="rounded-md border border-zinc-800 bg-zinc-950 px-3 py-2">
+                <div key={p.name} className="rounded-lg border border-border bg-background/60 px-3 py-2">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">{p.name}</span>
-                    <span className="text-xs text-zinc-500">{p.container} · {p.mode}</span>
+                    <span className="text-xs text-muted-foreground/70">{p.container} · {p.mode}</span>
                   </div>
-                  <div className="mt-1 text-xs text-zinc-400">
+                  <div className="mt-1 text-xs text-muted-foreground">
                     {renderValue(p.video_codec)} · {renderValue(p.extension)}
                     {p.pix_fmt ? ` · ${p.pix_fmt}` : ""}
                   </div>
@@ -204,11 +237,15 @@ export function Profiles() {
             <CardContent className="flex items-end gap-2">
               <div className="flex-1">
                 <Label>Profile name</Label>
-                <Select value={deleteName} onChange={(e) => setDeleteName(e.target.value)}>
-                  <option value="">Select…</option>
-                  {profiles.map((p) => (
-                    <option key={p.name} value={p.name}>{p.name}</option>
-                  ))}
+                <Select value={deleteName} onValueChange={setDeleteName}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {profiles.map((p) => (
+                      <SelectItem key={p.name} value={p.name}>{p.name}</SelectItem>
+                    ))}
+                  </SelectContent>
                 </Select>
               </div>
               <Button variant="destructive" onClick={handleDelete} disabled={deleteJob.ui.running || !deleteName}>

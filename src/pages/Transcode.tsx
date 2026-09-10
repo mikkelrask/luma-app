@@ -1,14 +1,25 @@
 import { useState } from "react";
-import { Button } from "../components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
-import { Input, Label, Select } from "../components/ui/input";
-import { Progress } from "../components/ui/progress";
-import { useLumaJob } from "../lib/useLumaJob";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Combobox } from "@/components/ui/combobox";
+import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useLumaJob } from "@/lib/useLumaJob";
+import { useProductions } from "@/lib/useProductions";
 
 export function Transcode() {
   const [production, setProduction] = useState("");
   const [day, setDay] = useState("");
   const [mediaType, setMediaType] = useState("both");
+
+  const { productions, daysFor } = useProductions();
 
   const { ui, run, cancel } = useLumaJob(
     () => {
@@ -18,10 +29,24 @@ export function Transcode() {
       if (mediaType) args.push("--media-type", mediaType);
       return args;
     },
-    true,
+    {
+      progress: true,
+      kind: "transcode",
+      label: `Transcode · ${production || "?"}${day ? ` · Day ${day}` : " · All days"} (${mediaType})`,
+    },
   );
 
   const summary = ui.result as { event?: string; ok?: boolean } | null;
+
+  const productionOptions = productions.map((p) => ({
+    value: p.name,
+    label: p.name + (p.is_archived ? " (archived)" : ""),
+  }));
+
+  const dayOptions = [
+    { value: "__all__", label: "All days" },
+    ...daysFor(production).map((d) => ({ value: d, label: `Day ${d}` })),
+  ];
 
   return (
     <div className="space-y-6">
@@ -32,20 +57,42 @@ export function Transcode() {
           <CardTitle>Transcode job</CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-2 gap-4">
-          <div>
+          <div className="space-y-2">
             <Label>Production</Label>
-            <Input value={production} onChange={(e) => setProduction(e.target.value)} placeholder="Show name" />
+            <Combobox
+              value={production}
+              onChange={(v) => {
+                setProduction(v);
+                setDay("");
+              }}
+              options={productionOptions}
+              placeholder="Select production…"
+              emptyText="No productions found."
+            />
           </div>
-          <div>
+          <div className="space-y-2">
             <Label>Day</Label>
-            <Input value={day} onChange={(e) => setDay(e.target.value)} placeholder="01" />
+            <Combobox
+              value={day === "" ? "__all__" : day}
+              onChange={(v) => {
+                setDay(v === "__all__" ? "" : v);
+              }}
+              options={dayOptions}
+              placeholder="Select day…"
+              emptyText="No days for this production."
+            />
           </div>
-          <div>
+          <div className="space-y-2">
             <Label>What to transcode</Label>
-            <Select value={mediaType} onChange={(e) => setMediaType(e.target.value)}>
-              <option value="both">Both</option>
-              <option value="dailies">Dailies</option>
-              <option value="proxy">Proxy</option>
+            <Select value={mediaType} onValueChange={setMediaType}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="both">Both</SelectItem>
+                <SelectItem value="dailies">Dailies</SelectItem>
+                <SelectItem value="proxy">Proxy</SelectItem>
+              </SelectContent>
             </Select>
           </div>
         </CardContent>
@@ -64,7 +111,7 @@ export function Transcode() {
       )}
 
       <div className="flex items-center gap-3">
-        <Button variant="primary" onClick={() => run()} disabled={ui.running || !production}>
+        <Button variant="default" onClick={() => run()} disabled={ui.running || !production}>
           {ui.running ? "Transcoding…" : "Start transcode"}
         </Button>
         {ui.running && (
@@ -84,7 +131,7 @@ export function Transcode() {
             <CardTitle>{summary.ok ? "Complete" : "Result"}</CardTitle>
           </CardHeader>
           <CardContent>
-            <pre className="overflow-x-auto rounded-md bg-zinc-950 p-4 text-xs text-zinc-300">
+            <pre className="overflow-x-auto rounded-md bg-muted p-4 text-xs">
               {JSON.stringify(summary, null, 2)}
             </pre>
           </CardContent>

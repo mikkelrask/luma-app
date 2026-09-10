@@ -16,6 +16,8 @@ export interface LumaResult {
 }
 
 export interface JobHandle {
+  /** Client-generated token used to correlate this job's events. */
+  token: string;
   /** Resolves when the sidecar process exits. */
   done: Promise<LumaResult>;
   /** Cancel: kills the running child process. */
@@ -23,56 +25,66 @@ export interface JobHandle {
 }
 
 interface PendingJob {
+  token: string;
   resolve: (r: LumaResult) => void;
   lastPayload: Record<string, unknown> | null;
   logs: string[];
   code: number | null;
   onEvent?: (value: Record<string, unknown>) => void;
+  onLog?: (line: string) => void;
+  settled: boolean;
 }
 
 let unlistenPromise: Promise<UnlistenFn> | null = null;
-let jobListeners = new Set<PendingJob>();
+const jobListeners = new Map<string, PendingJob>();
+
+function makeToken() {
+  return `job-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
 
 async function ensureListener() {
   if (unlistenPromise) return unlistenPromise;
   unlistenPromise = (async () => {
-    const unjob = await listen<unknown>("luma://job", (e) => {
-      if (typeof e.payload !== "object" || e.payload === null) return;
-      const value = e.payload as Record<string, unknown>;
-      for (const job of jobListeners) {
-        job.lastPayload = value;
-        job.onEvent?.(value);
+    const unjob = await listen<{ job?: string; data?: unknown }>("luma://job", (e) => {
+      const token = e.payload?.job;
+      if (typeof token !== "string" || typeof e.payload?.data !== "object" || e.payload?.data === null) return;
+      const pending = jobListeners.get(token);
+      if (!pending) return;
+      pending.lastPayload = e.payload.data as Record<string, unknown>;
+      pending.onEvent?.(e.payload.data as Record<string, unknown>);
+    });
+    const unexit = await listen<{ job?: string }>("luma://exit", (e) => {
+      const token = e.payload?.job;
+      if (typeof token !== "string") return;
+      const pending = jobListeners.get(token);
+      if (!pending) return;
+      jobListeners.delete(token);
+      pending.settled = true;
+      pending.resolve({
+        payload: pending.lastPayload,
+        code: pending.code ?? 0,
+        logs: pending.logs,
+      });
+    });
+    const unterminated = await listen<
+      { job?: string; code?: number | null } | null
+    >("luma://terminated", (e) => {
+      const payload = e.payload;
+      if (!payload || typeof payload.job !== "string") return;
+      const pending = jobListeners.get(payload.job);
+      if (!pending) return;
+      if (typeof payload.code === "number") {
+        pending.code = payload.code;
       }
     });
-    const unexit = await listen<unknown>("luma://exit", () => {
-      for (const job of jobListeners) {
-        job.code = job.code ?? 0;
-        jobListeners.delete(job);
-        job.resolve({
-          payload: job.lastPayload,
-          code: job.code,
-          logs: job.logs,
-        });
-      }
-    });
-    const unterminated = await listen<number | { code?: number } | null>(
-      "luma://terminated",
-      (e) => {
-        for (const job of jobListeners) {
-          if (typeof e.payload === "number") {
-            job.code = e.payload;
-          } else if (e.payload && typeof e.payload === "object") {
-            job.code = (e.payload as { code?: number }).code ?? null;
-          }
-        }
-      },
-    );
-    const unlog = await listen<string>("luma://log", (e) => {
-      const line = String(e.payload ?? "");
-      if (!line) return;
-      for (const job of jobListeners) {
-        job.logs.push(line);
-      }
+    const unlog = await listen<{ job?: string; line?: string }>("luma://log", (e) => {
+      const token = e.payload?.job;
+      const line = e.payload?.line;
+      if (typeof token !== "string" || typeof line !== "string" || !line) return;
+      const pending = jobListeners.get(token);
+      if (!pending) return;
+      pending.logs.push(line);
+      pending.onLog?.(line);
     });
     return () => {
       unjob();
@@ -97,36 +109,56 @@ export async function runLuma(
   args: string[],
   progress = false,
   onEvent?: (value: Record<string, unknown>) => void,
+  onLog?: (line: string) => void,
 ): Promise<JobHandle> {
   await ensureListener();
+
+  const token = makeToken();
 
   let resolveDone!: (r: LumaResult) => void;
   const done = new Promise<LumaResult>((resolve) => {
     resolveDone = resolve;
   });
 
-  const job: PendingJob = {
+  const pending: PendingJob = {
+    token,
     resolve: resolveDone,
     lastPayload: null,
     logs: [],
     code: null,
     onEvent,
+    onLog,
+    settled: false,
   };
-  jobListeners.add(job);
+  // Register the listener BEFORE invoke so that a fast job cannot emit exit
+  // before we are listening.
+  jobListeners.set(token, pending);
 
-  await invoke("run_luma", { args, progress });
+  try {
+    await invoke("run_luma", { args, progress, token });
+  } catch (e) {
+    jobListeners.delete(token);
+    pending.settled = true;
+    resolveDone({
+      payload: null,
+      code: -1,
+      logs: [`Could not start sidecar: ${String(e)}`],
+    });
+  }
 
   const cancel = async () => {
+    if (pending.settled) return;
     try {
-      await invoke("kill_luma");
+      await invoke("kill_luma", { token });
     } catch {
       /* best-effort */
     }
-    jobListeners.delete(job);
-    resolveDone({ payload: job.lastPayload, code: job.code, logs: job.logs });
+    jobListeners.delete(token);
+    pending.settled = true;
+    resolveDone({ payload: pending.lastPayload, code: pending.code, logs: pending.logs });
   };
 
-  return { done, cancel };
+  return { token, done, cancel };
 }
 
 interface ProgressState {
