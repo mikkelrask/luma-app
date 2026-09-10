@@ -97,7 +97,9 @@ jobs:
           # bundle recurses into the PyInstaller payload and fails on the
           # Python.framework layout, and the bundled payload already runs
           # unsigned (PyInstaller's macOS binaries are not code-signed).
-          codesign --force --sign - "$APP/Contents/MacOS/luma"
+          MAIN_BIN="$(find "$APP/Contents/MacOS" -maxdepth 1 -type f -perm -111 ! -name 'luma-sidecar' -print -quit)"
+          test -n "$MAIN_BIN"
+          codesign --force --sign - "$MAIN_BIN"
           codesign --force --sign - "$APP/Contents/MacOS/luma-sidecar"
 
       - name: Package DMG and ZIP
