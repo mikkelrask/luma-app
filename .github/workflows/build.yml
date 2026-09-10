@@ -92,14 +92,14 @@ jobs:
           set -euo pipefail
           APP="src-tauri/target/release/bundle/macos/luma.app"
           test -d "$APP"
-          cp -R src-tauri/binaries/_internal "$APP/Contents/MacOS/_internal"
-          # Ad-hoc sign only the top-level executables. Deep-signing the whole
-          # bundle recurses into the PyInstaller payload and fails on the
-          # Python.framework layout, and the bundled payload already runs
-          # unsigned (PyInstaller's macOS binaries are not code-signed).
-          MAIN_BIN="$(find "$APP/Contents/MacOS" -maxdepth 1 -type f -perm -111 ! -name 'luma-sidecar' -print -quit)"
-          test -n "$MAIN_BIN"
-          codesign --force --sign - "$MAIN_BIN"
+          # PyInstaller's onedir bootloader resolves _MEIPASS to
+          # Contents/Frameworks when the launcher runs inside a .app bundle,
+          # so the whole payload (Python runtime, stdlib, ffmpeg, pango libs)
+          # must live there — not next to the executable in Contents/MacOS.
+          cp -R src-tauri/binaries/_internal/. "$APP/Contents/Frameworks/"
+          # The main executable is already ad-hoc linker-signed; signing the
+          # sidecar launcher is enough. Never code-sign the whole bundle: it
+          # recurses into the payload and fails on the Python.framework layout.
           codesign --force --sign - "$APP/Contents/MacOS/luma-sidecar"
 
       - name: Package DMG and ZIP
