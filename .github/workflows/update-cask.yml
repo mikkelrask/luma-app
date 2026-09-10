@@ -1,0 +1,55 @@
+name: Update Homebrew cask
+
+on:
+  release:
+    types: [published, created]
+
+jobs:
+  update-cask:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    if: ${{ !github.event.release.draft }}
+    steps:
+      - name: Skip when no tap PAT configured
+        if: ${{ secrets.TAP_PAT == '' }}
+        run: echo "::warning::TAP_PAT secret is not configured; cask update skipped."
+
+      - name: Compute version and sha256 of the release zip
+        id: sha
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          curl -sL "https://github.com/mikkelrask/luma-app/releases/download/${TAG}/luma-darwin-arm64.zip" -o luma.zip
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+          echo "sha256=$(shasum -a 256 luma.zip | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+
+      - name: Update cask in tap
+        if: ${{ secrets.TAP_PAT != '' }}
+        env:
+          TAP_PAT: ${{ secrets.TAP_PAT }}
+          VERSION: ${{ steps.sha.outputs.version }}
+          SHA256: ${{ steps.sha.outputs.sha256 }}
+        run: |
+          set -euo pipefail
+          git clone "https://github.com/mikkelrask/homebrew-luma.git" tap
+          cd tap
+          python3 - <<'PY'
+          import os, pathlib, re
+          version = os.environ["VERSION"]
+          sha256 = os.environ["SHA256"]
+          path = pathlib.Path("Casks/luma.rb")
+          text = path.read_text()
+          text = re.sub(r'version "[^"]+"', f'version "{version}"', text, count=1)
+          text = re.sub(r'sha256 arm: "[0-9a-f]{64}"', f'sha256 arm: "{sha256}"', text, count=1)
+          path.write_text(text)
+          PY
+          git config user.name "luma-ci"
+          git config user.email "ci@lumafilm.de"
+          git add Casks/luma.rb
+          if git diff --cached --quiet; then
+            echo "No cask change needed (version and sha256 already current)."
+            exit 0
+          fi
+          git commit -m "luma: v${VERSION}"
+          git push "https://x-access-token:${TAP_PAT}@github.com/mikkelrask/homebrew-luma.git" HEAD:main

@@ -146,8 +146,11 @@ the private-repo URL — update the pinned submodule revision when you change th
 backend, and make sure the backend commits are pushed before relying on CI.
 
 Release binaries are rolled out through the [homebrew-luma tap](https://github.com/mikkelrask/homebrew-luma)
-(`mikkelrask/luma/luma`). When cutting a new `v*` release, update the cask's
-`version` and `sha256` (the sha256 of the release's `luma-darwin-arm64.zip`).
+(`mikkelrask/luma/luma`). A `release` workflow downloads the release's
+`luma-darwin-arm64.zip`, recomputes its sha256, and bumps the cask's `version` and
+`sha256` automatically. It needs a `TAP_PAT` secret (a fine-grained PAT with read/write
+contents access on the tap repo) configured on this repository; until then it skips
+with a warning and the cask has to be updated by hand.
 
 To cut a new release:
 
