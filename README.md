@@ -19,6 +19,27 @@ sidecar process.
   streams progress as newline-delimited JSON; a job panel shows live logs and a debug
   console for inspecting every event.
 
+## Install (Apple Silicon only)
+
+The app is distributed unsigned, so macOS Gatekeeper can flag it as "damaged" if the
+quarantine attribute survives. Homebrew installs handle this automatically.
+
+```bash
+brew tap mikkelrask/luma
+brew install --cask mikkelrask/luma/luma
+```
+
+If macOS ever reports the app as damaged, clear the quarantine flag once:
+
+```bash
+xattr -cr /Applications/luma.app
+```
+
+You can also download the `.zip`/`.dmg` directly from the latest
+[GitHub Release](https://github.com/mikkelrask/luma-app/releases) — run the same
+`xattr -cr` after copying the app into `/Applications` if Gatekeeper blocks first
+launch.
+
 ## Architecture
 
 | Layer     | Tech                                                                  |
@@ -123,6 +144,16 @@ drafts a GitHub Release from those artifacts.
 The workflow pins the `luma-backend` submodule at a specific commit and reads it via
 the private-repo URL — update the pinned submodule revision when you change the
 backend, and make sure the backend commits are pushed before relying on CI.
+
+Release binaries are rolled out through the [homebrew-luma tap](https://github.com/mikkelrask/homebrew-luma)
+(`mikkelrask/luma/luma`). When cutting a new `v*` release, update the cask's
+`version` and `sha256` (the sha256 of the release's `luma-darwin-arm64.zip`).
+
+To cut a new release:
+
+```bash
+npm run release -- minor   # patch | minor | major
+```
 
 ## Contributing
 
