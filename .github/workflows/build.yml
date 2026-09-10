@@ -117,16 +117,17 @@ jobs:
         run: |
           set -euo pipefail
           APP="src-tauri/target/release/bundle/macos/luma.app"
-          mkdir -p dist
-          ditto -c -k --keepParent "$APP" "dist/luma-darwin-arm64.zip"
-          hdiutil create -volname luma -srcfolder "$APP" -ov -format UDZO "dist/luma-darwin-arm64.dmg"
-          ls -lh dist
+          # Keep installers out of the frontend `dist/` (vite) directory.
+          mkdir -p artifacts
+          ditto -c -k --keepParent "$APP" "artifacts/luma-darwin-arm64.zip"
+          hdiutil create -volname luma -srcfolder "$APP" -ov -format UDZO "artifacts/luma-darwin-arm64.dmg"
+          ls -lh artifacts
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
           name: luma-darwin-arm64
-          path: dist/*
+          path: artifacts/*
           if-no-files-found: error
           retention-days: 30
 
