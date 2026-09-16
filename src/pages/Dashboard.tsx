@@ -9,6 +9,32 @@ interface Production {
   [key: string]: unknown;
 }
 
+interface StorageData {
+  productions: Record<string, Record<string, number | null>>;
+}
+
+const storageLabel: Record<string, string> = {
+  dailies: "Dailies",
+  proxies: "Proxies",
+};
+
+function storageLabelFor(key: string): string {
+  if (storageLabel[key]) return storageLabel[key];
+  const match = key.match(/^root_(\d+)$/);
+  return match ? `Root ${match[1]}` : key;
+}
+
+function formatBytes(size: number): string {
+  const units = ["B", "KB", "MB", "GB", "TB"];
+  let value = size;
+  let unit = 0;
+  while (value >= 1024 && unit < units.length - 1) {
+    value /= 1024;
+    unit += 1;
+  }
+  return `${value.toFixed(1)} ${units[unit]}`;
+}
+
 const statusColor: Record<string, string> = {
   active: "bg-emerald-500/15 text-emerald-300",
   upcoming: "bg-amber-500/15 text-amber-300",
@@ -17,7 +43,7 @@ const statusColor: Record<string, string> = {
 
 export function Dashboard() {
   const [status, setStatus] = useState<Record<string, Production[]> | null>(null);
-  const [storage, setStorage] = useState<Record<string, unknown> | null>(null);
+  const [storage, setStorage] = useState<StorageData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -39,7 +65,7 @@ export function Dashboard() {
         setError(str.logs.join("\n") || "Failed to load storage");
         return;
       }
-      setStorage(str.payload as Record<string, unknown> | null);
+      setStorage(str.payload as StorageData | null);
     } catch (e) {
       setError(String(e));
     } finally {
@@ -99,20 +125,60 @@ export function Dashboard() {
         })}
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Storage</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {storage ? (
-            <pre className="overflow-x-auto rounded-lg bg-background/60 p-4 text-xs text-muted-foreground">
-              {JSON.stringify(storage, null, 2)}
-            </pre>
-          ) : (
-            <p className="text-sm text-muted-foreground/70">No storage data.</p>
-          )}
-        </CardContent>
-      </Card>
+      <div>
+        <h2 className="mb-3 text-lg font-semibold">Storage</h2>
+        {storage?.productions ? (
+          <>
+            {Object.keys(storage.productions).length === 0 ? (
+              <p className="text-sm text-muted-foreground/70">No storage data.</p>
+            ) : (
+              <div className="grid grid-cols-3 gap-4">
+                {Object.entries(storage.productions).map(([prodName, sizes]) => {
+                  const total = Object.values(sizes).reduce<number>(
+                    (sum, size) => sum + (size ?? 0),
+                    0,
+                  );
+                  return (
+                    <Card key={prodName}>
+                      <CardHeader className="pb-0">
+                        <CardTitle className="truncate text-base">{prodName}</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-1.5">
+                        {Object.entries(sizes).map(([key, size]) => {
+                          const label = storageLabelFor(key);
+                          return (
+                            <div
+                              key={key}
+                              className="flex items-center justify-between rounded-lg border border-border bg-background/60 px-3 py-1.5"
+                            >
+                              <span className="text-sm text-muted-foreground">{label}</span>
+                              <span className="text-sm tabular-nums">
+                                {size === null ? (
+                                  <span className="text-muted-foreground/50">Not found</span>
+                                ) : (
+                                  formatBytes(size)
+                                )}
+                              </span>
+                            </div>
+                          );
+                        })}
+                        <div className="flex items-center justify-between rounded-lg border border-border bg-primary/10 px-3 py-1.5">
+                          <span className="text-sm font-medium">Total</span>
+                          <span className="text-sm font-semibold tabular-nums">
+                            {formatBytes(total)}
+                          </span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </>
+        ) : (
+          <p className="text-sm text-muted-foreground/70">No storage data.</p>
+        )}
+      </div>
     </div>
   );
 }
