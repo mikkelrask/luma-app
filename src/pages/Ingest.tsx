@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
+import { CheckIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Combobox } from "@/components/ui/combobox";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
@@ -22,6 +23,36 @@ interface Volume {
   size_gb: number;
   is_removable: boolean;
   is_network: boolean;
+}
+
+function formatGb(gb: number): string {
+  if (gb <= 0) return "Unknown size";
+  if (gb >= 1024) return `${(gb / 1024).toFixed(2)} TB`;
+  return `${gb % 1 === 0 ? gb : gb.toFixed(1)} GB`;
+}
+
+function VolumeIcon({ network, selected }: { network: boolean; selected: boolean }) {
+  const uid = useId();
+  const bodyId = `${uid}-body`;
+  const topLight = network ? "#93c5fd" : "#f4f4f5";
+  const topDark = network ? "#2563eb" : "#a1a1aa";
+  const led = selected ? (network ? "#22d3ee" : "#22c55e") : "#d4d4d8";
+
+  return (
+    <svg viewBox="0 0 64 64" className="size-12" role="img" aria-hidden="true">
+      <defs>
+        <linearGradient id={bodyId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor={topLight} />
+          <stop offset="1" stopColor={topDark} />
+        </linearGradient>
+      </defs>
+      <rect x="10" y="16" width="44" height="34" rx="8" fill={`url(#${bodyId})`} />
+      <rect x="10" y="16" width="44" height="11" rx="8" fill="rgba(255,255,255,0.22)" />
+      <rect x="17" y="38" width="30" height="3" rx="1.5" fill="rgba(0,0,0,0.28)" />
+      <rect x="17" y="43" width="30" height="3" rx="1.5" fill="rgba(0,0,0,0.28)" />
+      <circle cx="48" cy="27" r="2.6" fill={led} />
+    </svg>
+  );
 }
 
 export function Ingest() {
@@ -86,36 +117,49 @@ export function Ingest() {
             <span>Card readers</span>
             <Button variant="ghost" size="sm" onClick={refreshVolumes}>Refresh</Button>
           </CardTitle>
+          <CardDescription>Removable and network volumes on this machine</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {volumes.length === 0 && (
             <p className="text-sm text-muted-foreground">No card readers found.</p>
           )}
-          <Select value={volume} onValueChange={setVolume}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select volume…" />
-            </SelectTrigger>
-            <SelectContent>
-              {volumes.map((v) => (
-                <SelectItem key={v.path} value={v.path}>
-                  {v.name} — {v.size_gb} GB
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <div className="flex flex-wrap gap-2">
-            {volumes.map((v) => (
-              <Badge
-                key={v.path}
-                className={
-                  v.is_removable
-                    ? "bg-emerald-500/15 text-emerald-300"
-                    : "bg-white/[0.05] text-muted-foreground"
-                }
-              >
-                {v.name}{v.is_removable ? " (removable)" : v.is_network ? " (network)" : ""}
-              </Badge>
-            ))}
+          <div className="grid grid-cols-4 gap-3">
+            {volumes.map((v) => {
+              const active = volume === v.path;
+              return (
+                <button
+                  key={v.path}
+                  type="button"
+                  onClick={() => setVolume(v.path)}
+                  aria-pressed={active}
+                  className={`relative flex flex-col items-center gap-1.5 rounded-lg border px-3 py-4 transition-colors ${
+                    active
+                      ? "border-primary bg-primary/10"
+                      : "border-border bg-background/60 hover:border-muted-foreground/40 hover:bg-background"
+                  }`}
+                >
+                  {active && (
+                    <span className="absolute right-2 top-2 rounded-full bg-primary p-0.5">
+                      <CheckIcon className="size-3 text-primary-foreground" />
+                    </span>
+                  )}
+                  <VolumeIcon network={v.is_network} selected={active} />
+                  <span
+                    className={`max-w-full truncate text-center text-sm ${
+                      active ? "font-medium text-foreground" : "text-muted-foreground"
+                    }`}
+                  >
+                    {v.name}
+                  </span>
+                  <span className="text-xs text-muted-foreground/70">
+                    {formatGb(v.size_gb)}
+                  </span>
+                  {v.is_network && (
+                    <Badge variant="secondary" className="mt-0.5 text-[10px]">network</Badge>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </CardContent>
       </Card>
