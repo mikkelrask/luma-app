@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import { useLumaJob } from "@/lib/useLumaJob";
 import { runLuma } from "@/lib/luma";
+import { FieldHint } from "@/components/ui/field-hint";
 
 interface ConfigData {
   roots?: string[];
@@ -177,7 +178,7 @@ export function Create() {
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>Proxy path</Label>
+            <Label>Proxy location</Label>
             <FilePicker
               directory
               value={proxyPath}
@@ -193,6 +194,7 @@ export function Create() {
               onChange={setLut}
               placeholder="/path/to/lut.cube"
             />
+            <FieldHint>Color LUT applied when transcoding dailies</FieldHint>
           </div>
           <div className="space-y-2">
             <Label>Transform</Label>
@@ -207,6 +209,7 @@ export function Create() {
                 ))}
               </SelectContent>
             </Select>
+            <FieldHint>Color transform applied to transcodes</FieldHint>
           </div>
         </CardContent>
       </Card>

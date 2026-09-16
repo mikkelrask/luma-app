@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Combobox } from "@/components/ui/combobox";
 import { Label } from "@/components/ui/label";
 import { useLumaJob } from "@/lib/useLumaJob";
@@ -45,6 +45,7 @@ export function Reports() {
       <Card>
         <CardHeader>
           <CardTitle>Re-generate ingest reports</CardTitle>
+          <CardDescription>Rebuild PDF and JSON ingest reports from saved data</CardDescription>
         </CardHeader>
         <CardContent className="grid grid-cols-2 gap-4">
           <div className="space-y-2">

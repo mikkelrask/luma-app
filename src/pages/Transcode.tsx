@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { useLumaJob } from "@/lib/useLumaJob";
 import { useProductions } from "@/lib/useProductions";
+import { FieldHint } from "@/components/ui/field-hint";
 
 export function Transcode() {
   const [production, setProduction] = useState("");
@@ -94,6 +95,7 @@ export function Transcode() {
                 <SelectItem value="proxy">Proxy</SelectItem>
               </SelectContent>
             </Select>
+            <FieldHint>Dailies are the edit-ready high-res files; proxies are lightweight previews</FieldHint>
           </div>
         </CardContent>
       </Card>
