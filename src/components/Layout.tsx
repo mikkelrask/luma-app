@@ -76,8 +76,10 @@ export function Layout() {
           })}
         </nav>
 
-        <div className="min-h-0 flex-1 overflow-y-auto">
-          <TaskPanel />
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+          <div className="mt-auto">
+            <TaskPanel />
+          </div>
         </div>
 
         <div className="border-t border-border px-5 py-3">
