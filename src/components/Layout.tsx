@@ -27,7 +27,7 @@ export function Layout() {
   const { hasActive } = useJobs();
 
   return (
-    <div className="flex min-h-screen bg-background text-foreground">
+    <div className="flex h-screen overflow-hidden bg-background text-foreground">
       <aside className="flex w-56 shrink-0 flex-col border-r border-border bg-card bg-gradient-to-b from-white/[0.04] to-transparent">
         <div className="flex items-center gap-2.5 px-5 py-5">
           <span className="grid size-8 place-items-center rounded-lg border border-white/10 bg-gradient-to-b from-white/10 to-white/[0.02] text-primary shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08)]">
@@ -41,7 +41,7 @@ export function Layout() {
         <p className="px-4 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/70">
           Workspace
         </p>
-        <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-3 pb-3">
+        <nav className="flex flex-col gap-0.5 overflow-y-auto px-3 pb-3">
           {links.map((l) => {
             const running = l.kind === "any" ? hasActive() : l.kind ? hasActive(l.kind) : false;
             return (
@@ -76,7 +76,9 @@ export function Layout() {
           })}
         </nav>
 
-        <TaskPanel />
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <TaskPanel />
+        </div>
 
         <div className="border-t border-border px-5 py-3">
           <p className="text-[11px] font-medium text-muted-foreground">luma DIT pipeline</p>
