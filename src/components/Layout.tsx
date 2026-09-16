@@ -20,7 +20,7 @@ const links: Array<{ to: string; label: string; end?: boolean; kind?: JobKind | 
   { to: "/transcode", label: "Transcode", kind: "transcode" },
   { to: "/reports", label: "Reports", kind: "reports" },
   { to: "/profiles", label: "Profiles", kind: "profiles" },
-  { to: "/config", label: "Config", kind: "config" },
+  { to: "/config", label: "Settings", kind: "config" },
 ];
 
 export function Layout() {
