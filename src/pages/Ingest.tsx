@@ -98,11 +98,15 @@ export function Ingest() {
 
   const report = ui.result as
     | {
-        production?: string;
+        production_name?: string;
         day?: string;
-        report_path?: string;
-        files?: unknown[];
-        failures?: unknown[];
+        media_type?: string;
+        files_copied?: number;
+        files_verified?: number;
+        files_failed?: number;
+        report_files?: Record<string, string>;
+        failed_files?: Array<{ file: string; error: string }>;
+        status?: string;
       }
     | null;
 
@@ -252,13 +256,28 @@ export function Ingest() {
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="text-sm text-muted-foreground">
-              {report.production} · day {report.day}
-              {report.report_path ? ` · ${report.report_path}` : ""}
+              {report.production_name} · day {report.day}
+              {report.media_type ? ` · ${report.media_type}` : ""}
+              {report.status ? ` · ${report.status}` : ""}
             </div>
-            {Array.isArray(report.failures) && report.failures.length > 0 && (
+            <div className="text-sm text-muted-foreground">
+              {report.files_copied ?? 0} copied · {report.files_verified ?? 0} verified
+              {report.files_failed ? ` · ${report.files_failed} failed` : ""}
+            </div>
+            {report.report_files && Object.keys(report.report_files).length > 0 && (
+              <div className="text-sm">
+                <span className="text-muted-foreground">Reports: </span>
+                <span className="font-mono text-xs">
+                  {Object.entries(report.report_files)
+                    .map(([kind, p]) => `${kind} → ${p}`)
+                    .join("\n")}
+                </span>
+              </div>
+            )}
+            {Array.isArray(report.failed_files) && report.failed_files.length > 0 && (
               <div className="rounded-md border border-red-700 bg-red-950/40 p-3">
                 <div className="text-sm font-medium text-red-300 mb-1">Failures</div>
-                <pre className="overflow-x-auto text-xs text-red-200">{JSON.stringify(report.failures, null, 2)}</pre>
+                <pre className="overflow-x-auto text-xs text-red-200">{JSON.stringify(report.failed_files, null, 2)}</pre>
               </div>
             )}
             <pre className="overflow-x-auto rounded-md bg-muted p-4 text-xs">
