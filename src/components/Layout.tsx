@@ -16,14 +16,33 @@ function BrandMark() {
   );
 }
 
-const links: Array<{ to: string; label: string; end?: boolean; kind?: JobKind | "any" }> = [
-  { to: "/", label: "Dashboard", end: true, kind: "any" },
-  { to: "/create", label: "Create", kind: "create" },
-  { to: "/ingest", label: "Ingest", kind: "ingest" },
-  { to: "/transcode", label: "Transcode", kind: "transcode" },
-  { to: "/reports", label: "Reports", kind: "reports" },
-  { to: "/profiles", label: "Profiles", kind: "profiles" },
-  { to: "/config", label: "Settings", kind: "config" },
+interface NavLinkDef {
+  to: string;
+  label: string;
+  end?: boolean;
+  kind?: JobKind | "any";
+}
+
+const navSections: Array<{ label?: string; links: NavLinkDef[] }> = [
+  {
+    links: [{ to: "/", label: "Dashboard", end: true, kind: "any" }],
+  },
+  {
+    label: "Work",
+    links: [
+      { to: "/ingest", label: "Ingest", kind: "ingest" },
+      { to: "/transcode", label: "Transcode", kind: "transcode" },
+    ],
+  },
+  {
+    label: "Manage",
+    links: [
+      { to: "/create", label: "Create", kind: "create" },
+      { to: "/reports", label: "Reports", kind: "reports" },
+      { to: "/profiles", label: "Profiles", kind: "profiles" },
+      { to: "/config", label: "Settings", kind: "config" },
+    ],
+  },
 ];
 
 export function Layout() {
@@ -60,42 +79,49 @@ export function Layout() {
           />
         </div>
 
-        <p className="px-4 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/70">
-          Workspace
-        </p>
         <nav className="flex flex-col gap-0.5 overflow-y-auto px-3 pb-3">
-          {links.map((l) => {
-            const running = l.kind === "any" ? hasActive() : l.kind ? hasActive(l.kind) : false;
-            return (
-              <NavLink
-                key={l.to}
-                to={l.to}
-                end={l.end}
-                className={({ isActive }) =>
-                  `group flex items-center justify-between rounded-lg px-3 py-2 text-[13px] transition-colors ${
-                    isActive
-                      ? "font-medium text-foreground bg-white/[0.07]"
-                      : "text-muted-foreground hover:bg-white/[0.04] hover:text-foreground"
-                  }`
-                }
-              >
-                <span className="flex items-center gap-2.5">
-                  <span
-                    className={`size-1.5 rounded-full transition-colors ${
-                      running ? "bg-primary" : "bg-transparent group-hover:bg-white/20"
-                    }`}
-                    aria-hidden="true"
-                  />
-                  <span>{l.label}</span>
-                </span>
-                {running && (
-                  <span className="ml-2 text-[10px] text-primary" aria-label="job running">
-                    ●
-                  </span>
-                )}
-              </NavLink>
-            );
-          })}
+          {navSections.map((section) => (
+            <div key={section.label ?? "top"} className="flex flex-col gap-0.5">
+              {section.label && (
+                <p className="px-4 pb-1 pt-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/70">
+                  {section.label}
+                </p>
+              )}
+              {section.links.map((l) => {
+                const running =
+                  l.kind === "any" ? hasActive() : l.kind ? hasActive(l.kind) : false;
+                return (
+                  <NavLink
+                    key={l.to}
+                    to={l.to}
+                    end={l.end}
+                    className={({ isActive }) =>
+                      `group flex items-center justify-between rounded-lg px-3 py-2 text-[13px] transition-colors ${
+                        isActive
+                          ? "font-medium text-foreground bg-white/[0.07]"
+                          : "text-muted-foreground hover:bg-white/[0.04] hover:text-foreground"
+                      }`
+                    }
+                  >
+                    <span className="flex items-center gap-2.5">
+                      <span
+                        className={`size-1.5 rounded-full transition-colors ${
+                          running ? "bg-primary" : "bg-transparent group-hover:bg-white/20"
+                        }`}
+                        aria-hidden="true"
+                      />
+                      <span>{l.label}</span>
+                    </span>
+                    {running && (
+                      <span className="ml-2 text-[10px] text-primary" aria-label="job running">
+                        ●
+                      </span>
+                    )}
+                  </NavLink>
+                );
+              })}
+            </div>
+          ))}
         </nav>
 
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
