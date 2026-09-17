@@ -59,14 +59,18 @@ function VolumeIcon({ network, selected }: { network: boolean; selected: boolean
 export function Ingest() {
   const [volumes, setVolumes] = useState<Volume[]>([]);
   const [volume, setVolume] = useState("");
+  const [showAll, setShowAll] = useState(false);
   const [day, setDay] = useState("");
   const [mediaType, setMediaType] = useState("video");
 
   const { productions, daysFor, loading } = useProductions();
   const { production, setProduction } = useLinkedProduction({ productions, loading });
 
-  const refreshVolumes = async () => {
-    const h = await runLuma(["ingest", "--list-volumes"], false);
+  const refreshVolumes = async (includeAll: boolean) => {
+    const h = await runLuma(
+      ["ingest", "--list-volumes", ...(includeAll ? ["--all-volumes"] : [])],
+      false,
+    );
     const r = await h.done;
     const list = (r.payload as { volumes?: Volume[] })?.volumes ?? [];
     setVolumes(list);
@@ -77,8 +81,8 @@ export function Ingest() {
   };
 
   useEffect(() => {
-    refreshVolumes();
-  }, []);
+    refreshVolumes(showAll);
+  }, [showAll]);
 
   const { ui, run, cancel } = useLumaJob(
     () => {
@@ -119,13 +123,20 @@ export function Ingest() {
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <span>Card readers</span>
-            <Button variant="ghost" size="sm" onClick={refreshVolumes}>Refresh</Button>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => setShowAll((v) => !v)}>
+                {showAll ? "Removable only" : "View all"}
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => refreshVolumes(showAll)}>Refresh</Button>
+            </div>
           </CardTitle>
-          <CardDescription>Removable and network volumes on this machine</CardDescription>
+          <CardDescription>{showAll ? "Removable, network and other mounted volumes" : "Removable volumes on this machine"}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {volumes.length === 0 && (
-            <p className="text-sm text-muted-foreground">No card readers found.</p>
+            <p className="text-sm text-muted-foreground">
+              {showAll ? "No volumes found." : "No card readers found."}
+            </p>
           )}
           <div className="grid grid-cols-4 gap-3">
             {volumes.map((v) => {
