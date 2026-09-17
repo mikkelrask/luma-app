@@ -70,7 +70,10 @@ export function Ingest() {
     const r = await h.done;
     const list = (r.payload as { volumes?: Volume[] })?.volumes ?? [];
     setVolumes(list);
-    if (list.length > 0 && !volume) setVolume(list[0].path);
+    if (list.length > 0 && !volume) {
+      const removable = list.find((v) => v.is_removable);
+      setVolume((removable ?? list[0]).path);
+    }
   };
 
   useEffect(() => {
