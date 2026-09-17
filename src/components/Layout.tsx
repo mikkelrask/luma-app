@@ -25,20 +25,18 @@ interface NavLinkDef {
 
 const navSections: Array<{ label?: string; links: NavLinkDef[] }> = [
   {
-    links: [{ to: "/", label: "Dashboard", end: true, kind: "any" }],
-  },
-  {
     label: "Work",
     links: [
+      { to: "/", label: "Dashboard", end: true, kind: "any" },
       { to: "/ingest", label: "Ingest", kind: "ingest" },
       { to: "/transcode", label: "Transcode", kind: "transcode" },
+      { to: "/reports", label: "Reports", kind: "reports" }
     ],
   },
   {
     label: "Manage",
     links: [
-      { to: "/create", label: "Create", kind: "create" },
-      { to: "/reports", label: "Reports", kind: "reports" },
+      { to: "/create", label: "Add Production", kind: "create" },
       { to: "/profiles", label: "Profiles", kind: "profiles" },
       { to: "/config", label: "Settings", kind: "config" },
     ],
