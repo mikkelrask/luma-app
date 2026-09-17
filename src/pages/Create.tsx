@@ -23,6 +23,7 @@ interface ConfigData {
   roots?: string[];
   profiles?: Array<{ name: string }>;
   transforms?: string[];
+  proxy_path?: string;
 }
 
 const NONE = "__none__";
@@ -66,7 +67,11 @@ export function Create() {
           setConfigError(r.logs.join("\n") || "Failed to load configuration");
           return;
         }
-        setConfig((r.payload as ConfigData) ?? null);
+        const payload = (r.payload as ConfigData) ?? null;
+        setConfig(payload);
+        if (payload?.proxy_path && !proxyPath) {
+          setProxyPath(payload.proxy_path);
+        }
       })
       .catch((e) => setConfigError(String(e)));
   }, []);
@@ -131,7 +136,7 @@ export function Create() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Production</Label>
-                <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Production title" />
+                <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name" />
               </div>
               <div className="space-y-2">
                 <Label>Season</Label>
@@ -176,7 +181,7 @@ export function Create() {
             <MultiDatePicker
               value={offDays}
               onChange={setOffDays}
-              placeholder="Pick any dates that are not production days (need not be adjacent)"
+              placeholder="Pick any dates that are not production days"
             />
           </div>
           <div className="space-y-2">
