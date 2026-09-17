@@ -28,10 +28,23 @@ interface ConfigData {
 const NONE = "__none__";
 const DEFAULT = "__default__";
 
+function productionSlug(title: string, season: string): string {
+  const slug = title
+    .toLowerCase()
+    .replace(/æ/g, "ae")
+    .replace(/ø/g, "oe")
+    .replace(/å/g, "aa")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  const s = season.trim();
+  return s ? `${slug}-S${s}` : slug;
+}
+
 export function Create() {
   const { setProduction } = useSession();
   const { refresh } = useProductions();
   const [name, setName] = useState("");
+  const [season, setSeason] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [offDays, setOffDays] = useState<string[]>([]);
@@ -62,6 +75,7 @@ export function Create() {
     () => {
       const args = ["create"];
       if (name) args.push("--name", name);
+      if (season) args.push("--season", season);
       if (startDate) args.push("--start-date", startDate);
       if (endDate) args.push("--end-date", endDate);
       if (offDays.length > 0) args.push("--off-days", offDays.join(","));
@@ -114,8 +128,22 @@ export function Create() {
         </CardHeader>
         <CardContent className="grid grid-cols-2 gap-4">
           <div className="col-span-2 space-y-2">
-            <Label>Production</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Production title" />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Production</Label>
+                <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Production title" />
+              </div>
+              <div className="space-y-2">
+                <Label>Season</Label>
+                <Input value={season} onChange={(e) => setSeason(e.target.value)} placeholder="Optional (e.g. 2)" />
+              </div>
+            </div>
+            <FieldHint>
+              Folder name:{" "}
+              {name.trim()
+                ? productionSlug(name, season)
+                : "—"}
+            </FieldHint>
           </div>
           <hr className="col-span-2" />
           <div className=" space-y-2">
