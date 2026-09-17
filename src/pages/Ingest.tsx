@@ -16,6 +16,7 @@ import {
 import { useLumaJob } from "@/lib/useLumaJob";
 import { runLuma } from "@/lib/luma";
 import { useProductions } from "@/lib/useProductions";
+import { useLinkedProduction } from "@/lib/session";
 
 interface Volume {
   name: string;
@@ -58,11 +59,11 @@ function VolumeIcon({ network, selected }: { network: boolean; selected: boolean
 export function Ingest() {
   const [volumes, setVolumes] = useState<Volume[]>([]);
   const [volume, setVolume] = useState("");
-  const [production, setProduction] = useState("");
   const [day, setDay] = useState("");
   const [mediaType, setMediaType] = useState("video");
 
-  const { productions, daysFor } = useProductions();
+  const { productions, daysFor, loading } = useProductions();
+  const { production, setProduction } = useLinkedProduction({ productions, loading });
 
   const refreshVolumes = async () => {
     const h = await runLuma(["ingest", "--list-volumes"], false);

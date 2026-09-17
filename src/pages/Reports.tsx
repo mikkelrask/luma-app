@@ -5,12 +5,13 @@ import { Combobox } from "@/components/ui/combobox";
 import { Label } from "@/components/ui/label";
 import { useLumaJob } from "@/lib/useLumaJob";
 import { useProductions } from "@/lib/useProductions";
+import { useLinkedProduction } from "@/lib/session";
 
 export function Reports() {
-  const [production, setProduction] = useState("");
   const [day, setDay] = useState("");
 
-  const { productions, daysFor } = useProductions();
+  const { productions, daysFor, loading } = useProductions();
+  const { production, setProduction } = useLinkedProduction({ productions, loading });
 
   const { ui, run } = useLumaJob(
     () => {

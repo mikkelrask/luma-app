@@ -16,6 +16,7 @@ import {
 import { useLumaJob } from "@/lib/useLumaJob";
 import { runLuma } from "@/lib/luma";
 import { FieldHint } from "@/components/ui/field-hint";
+import { useSession } from "@/lib/session";
 
 interface ConfigData {
   roots?: string[];
@@ -27,6 +28,7 @@ const NONE = "__none__";
 const DEFAULT = "__default__";
 
 export function Create() {
+  const { setProduction } = useSession();
   const [name, setName] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -86,6 +88,10 @@ export function Create() {
         production_days?: Array<string | { day: string; date: string }>;
       }
     | null;
+
+  useEffect(() => {
+    if (result?.production) setProduction(result.production);
+  }, [result?.production, setProduction]);
 
   return (
     <div className="space-y-6">

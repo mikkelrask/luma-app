@@ -13,14 +13,15 @@ import {
 } from "@/components/ui/select";
 import { useLumaJob } from "@/lib/useLumaJob";
 import { useProductions } from "@/lib/useProductions";
+import { useLinkedProduction } from "@/lib/session";
 import { FieldHint } from "@/components/ui/field-hint";
 
 export function Transcode() {
-  const [production, setProduction] = useState("");
   const [day, setDay] = useState("");
   const [mediaType, setMediaType] = useState("both");
 
-  const { productions, daysFor } = useProductions();
+  const { productions, daysFor, loading } = useProductions();
+  const { production, setProduction } = useLinkedProduction({ productions, loading });
 
   const { ui, run, cancel } = useLumaJob(
     () => {

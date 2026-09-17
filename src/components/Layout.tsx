@@ -2,6 +2,9 @@ import { NavLink, Outlet } from "react-router-dom";
 import { TaskPanel } from "@/components/TaskPanel";
 import { useJobs } from "@/lib/jobs";
 import type { JobKind } from "@/lib/jobs";
+import { useProductions } from "@/lib/useProductions";
+import { useSession } from "@/lib/session";
+import { Combobox } from "@/components/ui/combobox";
 
 function BrandMark() {
   return (
@@ -25,6 +28,12 @@ const links: Array<{ to: string; label: string; end?: boolean; kind?: JobKind | 
 
 export function Layout() {
   const { hasActive } = useJobs();
+  const { production, setProduction } = useSession();
+  const { productions } = useProductions();
+  const productionOptions = productions.map((p) => ({
+    value: p.name,
+    label: p.name + (p.is_archived ? " (archived)" : ""),
+  }));
 
   return (
     <div className="flex h-screen overflow-hidden bg-background text-foreground">
@@ -36,6 +45,19 @@ export function Layout() {
           <div className="font-display text-[17px] font-semibold tracking-tight">
             luma<span className="ml-1 text-muted-foreground">/dit</span>
           </div>
+        </div>
+
+        <div className="space-y-1.5 px-4 pb-2 pt-1">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/70">
+            Working on
+          </p>
+          <Combobox
+            value={production}
+            onChange={setProduction}
+            options={productionOptions}
+            placeholder="Select production…"
+            emptyText="No productions found."
+          />
         </div>
 
         <p className="px-4 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/70">
