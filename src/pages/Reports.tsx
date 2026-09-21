@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageHeader } from "@/components/PageHeader";
 import { Combobox } from "@/components/ui/combobox";
 import { Label } from "@/components/ui/label";
 import { useLumaJob } from "@/lib/useLumaJob";
@@ -41,7 +42,11 @@ export function Reports() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Reports</h1>
+      <PageHeader
+        kicker="Deliverables"
+        title="Reports"
+        description="Rebuild PDF and JSON ingest reports from saved data."
+      />
 
       <Card>
         <CardHeader>

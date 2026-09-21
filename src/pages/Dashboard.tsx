@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { runLuma } from "../lib/luma";
-import { Badge } from "@/components/ui/badge";
+import { Archive, Clock, Film, HardDrive } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageHeader } from "@/components/PageHeader";
 
 interface Production {
   name: string;
@@ -35,10 +36,31 @@ function formatBytes(size: number): string {
   return `${value.toFixed(1)} ${units[unit]}`;
 }
 
-const statusColor: Record<string, string> = {
-  active: "bg-emerald-500/15 text-emerald-300",
-  upcoming: "bg-amber-500/15 text-amber-300",
-  archived: "bg-white/[0.06] text-muted-foreground",
+const groupMeta: Record<
+  string,
+  { label: string; icon: typeof Film; accent: string; dot: string; rule: string }
+> = {
+  active: {
+    label: "Active",
+    icon: Film,
+    accent: "text-emerald-300",
+    dot: "bg-emerald-400 shadow-[0_0_8px_2px_rgba(52,211,153,0.5)]",
+    rule: "from-emerald-400/60",
+  },
+  upcoming: {
+    label: "Upcoming",
+    icon: Clock,
+    accent: "text-amber-300",
+    dot: "bg-amber-400 shadow-[0_0_8px_2px_rgba(251,191,36,0.5)]",
+    rule: "from-amber-400/60",
+  },
+  archived: {
+    label: "Archived",
+    icon: Archive,
+    accent: "text-muted-foreground",
+    dot: "bg-white/30",
+    rule: "from-white/25",
+  },
 };
 
 export function Dashboard() {
@@ -84,13 +106,17 @@ export function Dashboard() {
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Dashboard</h1>
-        <Button variant="outline" onClick={load} disabled={loading}>
-          {loading ? "Refreshing…" : "Refresh"}
-        </Button>
-      </div>
+    <div className="space-y-8">
+      <PageHeader
+        kicker="Overview"
+        title="Dashboard"
+        description="Production status and storage at a glance."
+        actions={
+          <Button variant="outline" onClick={load} disabled={loading}>
+            {loading ? "Refreshing…" : "Refresh"}
+          </Button>
+        }
+      />
 
       {error && (
         <div className="rounded-md border border-red-700 bg-red-950/40 p-3 text-sm text-red-300">
@@ -100,23 +126,40 @@ export function Dashboard() {
 
       <div className="grid grid-cols-3 gap-4">
         {groups.map((g) => {
+          const meta = groupMeta[g.key];
+          const Icon = meta.icon;
           const items = status?.[g.key] ?? [];
           return (
-            <Card key={g.key}>
-              <CardHeader>
-                <CardTitle>{g.label}</CardTitle>
+            <Card key={g.key} className="gap-4 py-5">
+              <CardHeader className="px-5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <span
+                      className={`grid size-8 place-items-center rounded-lg border border-white/10 bg-white/[0.03] ${meta.accent}`}
+                    >
+                      <Icon className="size-4" />
+                    </span>
+                    <span className="text-sm font-medium text-muted-foreground">
+                      {meta.label}
+                    </span>
+                  </div>
+                  <span className="font-display text-3xl font-semibold tabular-nums">
+                    {items.length}
+                  </span>
+                </div>
               </CardHeader>
-              <CardContent className="space-y-2">
+              <div className={`mx-5 h-px bg-gradient-to-r ${meta.rule} to-transparent`} />
+              <CardContent className="space-y-1.5 px-5">
                 {items.length === 0 && (
-                  <p className="text-sm text-muted-foreground/70">None</p>
+                  <p className="py-1 text-sm text-muted-foreground/50">Nothing here yet.</p>
                 )}
                 {items.map((p) => (
                   <div
                     key={p.name as string}
-                    className="flex items-center justify-between rounded-lg border border-border bg-background/60 px-3 py-2"
+                    className="flex items-center justify-between gap-3 rounded-lg border border-border bg-background/50 px-3 py-1.5"
                   >
-                    <span className="text-sm">{p.name as string}</span>
-                    <Badge className={statusColor[g.key]}>{g.label}</Badge>
+                    <span className="truncate text-sm">{p.name as string}</span>
+                    <span className={`size-1.5 shrink-0 rounded-full ${meta.dot}`} />
                   </div>
                 ))}
               </CardContent>
@@ -126,55 +169,75 @@ export function Dashboard() {
       </div>
 
       <div>
-        <h2 className="mb-3 text-lg font-semibold">Storage</h2>
+        <div className="mb-4 flex items-center gap-2.5">
+          <span className="grid size-7 place-items-center rounded-lg border border-white/10 bg-white/[0.03] text-primary">
+            <HardDrive className="size-3.5" />
+          </span>
+          <h2 className="font-display text-lg font-semibold tracking-tight">Storage</h2>
+        </div>
+
         {storage?.productions ? (
-          <>
-            {Object.keys(storage.productions).length === 0 ? (
-              <p className="text-sm text-muted-foreground/70">No storage data.</p>
-            ) : (
-              <div className="grid grid-cols-3 gap-4">
-                {Object.entries(storage.productions).map(([prodName, sizes]) => {
-                  const total = Object.values(sizes).reduce<number>(
-                    (sum, size) => sum + (size ?? 0),
-                    0,
-                  );
-                  return (
-                    <Card key={prodName}>
-                      <CardHeader className="pb-0">
+          Object.keys(storage.productions).length === 0 ? (
+            <p className="text-sm text-muted-foreground/70">No storage data.</p>
+          ) : (
+            <div className="grid grid-cols-3 gap-4">
+              {Object.entries(storage.productions).map(([prodName, sizes]) => {
+                const total = Object.values(sizes).reduce<number>(
+                  (sum, size) => sum + (size ?? 0),
+                  0,
+                );
+                const max = Math.max(
+                  ...Object.values(sizes).filter((n): n is number => n !== null),
+                  0,
+                );
+                return (
+                  <Card key={prodName} className="gap-4 py-5">
+                    <CardHeader className="px-5 pb-0">
+                      <div className="flex items-baseline justify-between gap-3">
                         <CardTitle className="truncate text-base">{prodName}</CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-1.5">
-                        {Object.entries(sizes).map(([key, size]) => {
-                          const label = storageLabelFor(key);
-                          return (
-                            <div
-                              key={key}
-                              className="flex items-center justify-between rounded-lg border border-border bg-background/60 px-3 py-1.5"
-                            >
-                              <span className="text-sm text-muted-foreground">{label}</span>
-                              <span className="text-sm tabular-nums">
+                        <span className="shrink-0 font-display text-sm font-semibold tabular-nums text-primary">
+                          {formatBytes(total)}
+                        </span>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-2.5 px-5">
+                      {Object.entries(sizes).map(([key, size]) => {
+                        const label = storageLabelFor(key);
+                        const pct =
+                          size === null || max === 0
+                            ? 0
+                            : Math.max(2, Math.round((size / max) * 100));
+                        return (
+                          <div key={key} className="space-y-1">
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="text-muted-foreground">{label}</span>
+                              <span className="tabular-nums">
                                 {size === null ? (
-                                  <span className="text-muted-foreground/50">Not found</span>
+                                  <span className="text-muted-foreground/50">not found</span>
                                 ) : (
                                   formatBytes(size)
                                 )}
                               </span>
                             </div>
-                          );
-                        })}
-                        <div className="flex items-center justify-between rounded-lg border border-border bg-primary/10 px-3 py-1.5">
-                          <span className="text-sm font-medium">Total</span>
-                          <span className="text-sm font-semibold tabular-nums">
-                            {formatBytes(total)}
-                          </span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            )}
-          </>
+                            <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
+                              {size === null ? (
+                                <div className="h-full w-full bg-[repeating-linear-gradient(45deg,rgba(255,255,255,0.12)_0_4px,transparent_4px_8px)]" />
+                              ) : (
+                                <div
+                                  className="h-full rounded-full bg-gradient-to-r from-primary/50 to-primary transition-all duration-500"
+                                  style={{ width: `${pct}%` }}
+                                />
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )
         ) : (
           <p className="text-sm text-muted-foreground/70">No storage data.</p>
         )}

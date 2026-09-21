@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { PencilIcon, Trash2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageHeader } from "@/components/PageHeader";
 import {
   Dialog,
   DialogContent,
@@ -619,10 +620,12 @@ export function Profiles() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Profiles</h1>
-        <Button variant="outline" onClick={load}>Refresh</Button>
-      </div>
+      <PageHeader
+        kicker="Manage"
+        title="Profiles"
+        description="Reusable transcode presets for dailies and proxies."
+        actions={<Button variant="outline" onClick={load}>Refresh</Button>}
+      />
 
       <div className="space-y-4">
         <Card>

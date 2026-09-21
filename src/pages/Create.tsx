@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageHeader } from "@/components/PageHeader";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { FilePicker } from "@/components/ui/file-picker";
 import { Input } from "@/components/ui/input";
@@ -119,7 +120,11 @@ export function Create() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">New Production</h1>
+      <PageHeader
+        kicker="Manage"
+        title="New Production"
+        description="Set up roots, cards and delivery paths for a new job."
+      />
 
       {configError && (
         <div className="rounded-md border border-red-700 bg-red-950/40 p-3 text-sm text-red-300">

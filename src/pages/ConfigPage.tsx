@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageHeader } from "@/components/PageHeader";
 import { FilePicker } from "@/components/ui/file-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -79,10 +80,12 @@ export function ConfigPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Settings</h1>
-        <Button variant="outline" onClick={load} disabled={!loaded}>Reload</Button>
-      </div>
+      <PageHeader
+        kicker="Manage"
+        title="Settings"
+        description="Paths and defaults used across the pipeline."
+        actions={<Button variant="outline" onClick={load} disabled={!loaded}>Reload</Button>}
+      />
 
       {loadError && (
         <div className="rounded-md border border-red-700 bg-red-950/40 p-3 text-sm text-red-300">

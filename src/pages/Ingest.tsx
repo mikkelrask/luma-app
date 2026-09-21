@@ -3,6 +3,7 @@ import { CheckIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageHeader } from "@/components/PageHeader";
 import { Combobox } from "@/components/ui/combobox";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
@@ -117,7 +118,11 @@ export function Ingest() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Ingest</h1>
+      <PageHeader
+        kicker="Capture"
+        title="Ingest"
+        description="Offload and verify camera cards into the selected production."
+      />
 
       <Card>
         <CardHeader>
@@ -147,30 +152,33 @@ export function Ingest() {
                   type="button"
                   onClick={() => setVolume(v.path)}
                   aria-pressed={active}
-                  className={`relative flex flex-col items-center gap-1.5 rounded-lg border px-3 py-4 transition-colors ${
+                  className={`group relative flex flex-col items-center gap-2 overflow-hidden rounded-xl border px-3 py-5 text-center transition-all ${
                     active
-                      ? "border-primary bg-primary/10"
-                      : "border-border bg-background/60 hover:border-muted-foreground/40 hover:bg-background"
+                      ? "border-primary/70 bg-gradient-to-b from-primary/15 to-primary/[0.03] shadow-[0_18px_40px_-28px_var(--primary)]"
+                      : "border-border bg-background/50 hover:-translate-y-0.5 hover:border-white/20 hover:bg-background"
                   }`}
                 >
                   {active && (
-                    <span className="absolute right-2 top-2 rounded-full bg-primary p-0.5">
-                      <CheckIcon className="size-3 text-primary-foreground" />
-                    </span>
+                    <>
+                      <span className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary to-transparent" />
+                      <span className="absolute right-2 top-2 rounded-full bg-primary p-0.5 shadow-[0_0_10px_1px_var(--primary)]">
+                        <CheckIcon className="size-3 text-primary-foreground" />
+                      </span>
+                    </>
                   )}
                   <VolumeIcon network={v.is_network} selected={active} />
                   <span
-                    className={`max-w-full truncate text-center text-sm ${
+                    className={`max-w-full truncate text-sm ${
                       active ? "font-medium text-foreground" : "text-muted-foreground"
                     }`}
                   >
                     {v.name}
                   </span>
-                  <span className="text-xs text-muted-foreground/70">
+                  <span className="font-mono text-[11px] text-muted-foreground/70">
                     {formatGb(v.size_gb)}
                   </span>
                   {v.is_network && (
-                    <Badge variant="secondary" className="mt-0.5 text-[10px]">network</Badge>
+                    <Badge variant="secondary" className="text-[10px]">network</Badge>
                   )}
                 </button>
               );

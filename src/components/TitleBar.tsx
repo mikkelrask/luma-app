@@ -1,6 +1,7 @@
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { Minus, Square, X } from "lucide-react";
 import type { ComponentType } from "react";
+import { useJobs } from "@/lib/jobs";
 
 function BrandMark() {
   return (
@@ -46,6 +47,8 @@ function TrafficLight({ label, className, icon: Icon, onClick }: TrafficLightPro
 }
 
 export function TitleBar() {
+  const { running } = useJobs();
+
   return (
     <header
       data-tauri-drag-region
@@ -83,8 +86,20 @@ export function TitleBar() {
         </div>
       </div>
 
-      <div className="pointer-events-none absolute inset-x-0 text-center text-[11px] font-medium text-muted-foreground/50">
-        digital imaging workflow
+      <div className="pointer-events-none absolute inset-x-0 flex items-center justify-center gap-2 text-[11px] font-medium text-muted-foreground/50">
+        {running.length > 0 ? (
+          <>
+            <span className="relative flex size-1.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-70" />
+              <span className="relative inline-flex size-1.5 rounded-full bg-primary" />
+            </span>
+            <span className="text-primary/80">
+              {running.length} task{running.length > 1 ? "s" : ""} in flight
+            </span>
+          </>
+        ) : (
+          <span>digital imaging workflow</span>
+        )}
       </div>
     </header>
   );

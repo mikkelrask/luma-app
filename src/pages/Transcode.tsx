@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageHeader } from "@/components/PageHeader";
 import { Combobox } from "@/components/ui/combobox";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
@@ -52,7 +53,11 @@ export function Transcode() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Transcode</h1>
+      <PageHeader
+        kicker="Process"
+        title="Transcode"
+        description="Generate dailies and proxies from ingested media."
+      />
 
       <Card>
         <CardHeader>
