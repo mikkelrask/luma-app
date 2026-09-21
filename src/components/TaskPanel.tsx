@@ -6,6 +6,7 @@ import {
   CircleCheck,
   CircleX,
   Clapperboard,
+  CropIcon,
   FileText,
   FolderPlus,
   Repeat2,
@@ -24,6 +25,7 @@ const kindIcons: Record<JobKind, typeof Clapperboard> = {
   create: FolderPlus,
   config: Settings2,
   profiles: UserCog,
+  transforms: CropIcon,
 };
 
 function duration(ms: number) {
