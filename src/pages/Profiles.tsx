@@ -3,6 +3,7 @@ import { PencilIcon, Trash2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/PageHeader";
+import { RefreshButton } from "@/components/RefreshButton";
 import {
   Dialog,
   DialogContent,
@@ -588,11 +589,17 @@ export function Profiles() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [deleteName, setDeleteName] = useState("");
   const [editing, setEditing] = useState<Profile | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   const load = async () => {
-    const h = await runLuma(["profiles", "list"], false);
-    const r = await h.done;
-    setProfiles((r.payload as { profiles?: Profile[] })?.profiles ?? []);
+    setRefreshing(true);
+    try {
+      const h = await runLuma(["profiles", "list"], false);
+      const r = await h.done;
+      setProfiles((r.payload as { profiles?: Profile[] })?.profiles ?? []);
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   useEffect(() => {
@@ -624,7 +631,7 @@ export function Profiles() {
         kicker="Manage"
         title="Profiles"
         description="Reusable transcode presets for dailies and proxies."
-        actions={<Button variant="outline" onClick={load}>Refresh</Button>}
+        actions={<RefreshButton onRefresh={load} loading={refreshing} />}
       />
 
       <div className="space-y-4">

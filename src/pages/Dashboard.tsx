@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { runLuma } from "../lib/luma";
 import { Archive, Clock, Film, HardDrive } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { RefreshButton } from "@/components/RefreshButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/PageHeader";
 
@@ -111,11 +111,7 @@ export function Dashboard() {
         kicker="Overview"
         title="Dashboard"
         description="Production status and storage at a glance."
-        actions={
-          <Button variant="outline" onClick={load} disabled={loading}>
-            {loading ? "Refreshing…" : "Refresh"}
-          </Button>
-        }
+        actions={<RefreshButton onRefresh={load} loading={loading} />}
       />
 
       {error && (

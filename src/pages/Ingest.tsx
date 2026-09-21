@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/PageHeader";
+import { RefreshButton } from "@/components/RefreshButton";
 import { Combobox } from "@/components/ui/combobox";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
@@ -61,6 +62,7 @@ export function Ingest() {
   const [volumes, setVolumes] = useState<Volume[]>([]);
   const [volume, setVolume] = useState("");
   const [showAll, setShowAll] = useState(false);
+  const [volumesLoading, setVolumesLoading] = useState(false);
   const [day, setDay] = useState("");
   const [mediaType, setMediaType] = useState("video");
 
@@ -68,13 +70,18 @@ export function Ingest() {
   const { production, setProduction } = useLinkedProduction({ productions, loading });
 
   const refreshVolumes = async (includeAll: boolean) => {
-    const h = await runLuma(
-      ["ingest", "--list-volumes", ...(includeAll ? ["--all-volumes"] : [])],
-      false,
-    );
-    const r = await h.done;
-    const list = (r.payload as { volumes?: Volume[] })?.volumes ?? [];
-    setVolumes(list);
+    setVolumesLoading(true);
+    try {
+      const h = await runLuma(
+        ["ingest", "--list-volumes", ...(includeAll ? ["--all-volumes"] : [])],
+        false,
+      );
+      const r = await h.done;
+      const list = (r.payload as { volumes?: Volume[] })?.volumes ?? [];
+      setVolumes(list);
+    } finally {
+      setVolumesLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -122,18 +129,16 @@ export function Ingest() {
         kicker="Capture"
         title="Ingest"
         description="Offload and verify camera cards into the selected production."
+        actions={<RefreshButton onRefresh={() => refreshVolumes(showAll)} loading={volumesLoading} />}
       />
 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <span>Card readers</span>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={() => setShowAll((v) => !v)}>
-                {showAll ? "Removable only" : "View all"}
-              </Button>
-              <Button variant="ghost" size="sm" onClick={() => refreshVolumes(showAll)}>Refresh</Button>
-            </div>
+            <Button variant="outline" size="sm" onClick={() => setShowAll((v) => !v)}>
+              {showAll ? "Removable only" : "View all"}
+            </Button>
           </CardTitle>
           <CardDescription>{showAll ? "Removable, network and other mounted volumes" : "Removable volumes on this machine"}</CardDescription>
         </CardHeader>

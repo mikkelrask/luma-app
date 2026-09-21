@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/PageHeader";
+import { RefreshButton } from "@/components/RefreshButton";
 import { FilePicker } from "@/components/ui/file-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,6 +32,7 @@ export function ConfigPage() {
   const [dropbox, setDropbox] = useState("");
   const [proxyPath, setProxyPath] = useState("");
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
   const [themePref, setTheme] = useState<ThemePref>(getThemePref);
   const [accent, setAccent] = useState<{ code: number; name: string } | null>(null);
 
@@ -57,6 +59,7 @@ export function ConfigPage() {
 
   const load = async () => {
     setLoadError(null);
+    setBusy(true);
     try {
       const h = await runLuma(["config"], false);
       const r = await h.done;
@@ -75,6 +78,8 @@ export function ConfigPage() {
       setLoaded(true);
     } catch (e) {
       setLoadError(String(e));
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -108,7 +113,7 @@ export function ConfigPage() {
         kicker="Manage"
         title="Settings"
         description="Paths and defaults used across the pipeline."
-        actions={<Button variant="outline" onClick={load} disabled={!loaded}>Reload</Button>}
+        actions={<RefreshButton onRefresh={load} loading={busy} disabled={!loaded} />}
       />
 
       {loadError && (
