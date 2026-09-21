@@ -107,7 +107,10 @@ export function useLumaJob(buildArgs: () => string[], opts: boolean | LumaJobOpt
         result: res.payload,
         error: finalState.error,
       });
-      if (label && transitioned) void notifyJobDone(label, ok);
+      // Only long-running kinds deserve an OS notification; quick commands
+      // (config, profiles, create) would spam the notification center.
+      const notifiable = kind === "ingest" || kind === "transcode" || kind === "reports";
+      if (label && transitioned && notifiable) void notifyJobDone(label, ok);
     }
 
     setUi(finalState);

@@ -1,11 +1,15 @@
 import { NavLink, Outlet } from "react-router-dom";
+import { useState } from "react";
 import { TaskPanel } from "@/components/TaskPanel";
 import { TitleBar } from "@/components/TitleBar";
+import { CommandPalette } from "@/components/CommandPalette";
 import { useJobs } from "@/lib/jobs";
 import type { JobKind } from "@/lib/jobs";
 import { useProductions } from "@/lib/useProductions";
 import { useSession } from "@/lib/session";
 import { Combobox } from "@/components/ui/combobox";
+
+const SHOW_ARCHIVED_KEY = "luma.sidebar.showArchived";
 
 interface NavLinkDef {
   to: string;
@@ -38,10 +42,30 @@ export function Layout() {
   const { hasActive } = useJobs();
   const { production, setProduction } = useSession();
   const { productions } = useProductions();
-  const productionOptions = productions.map((p) => ({
-    value: p.name,
-    label: p.name + (p.is_archived ? " (archived)" : ""),
-  }));
+  const [showArchived, setShowArchived] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(SHOW_ARCHIVED_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
+
+  const setShowArchivedPref = (v: boolean) => {
+    setShowArchived(v);
+    try {
+      localStorage.setItem(SHOW_ARCHIVED_KEY, v ? "1" : "0");
+    } catch {
+      /* storage unavailable */
+    }
+  };
+
+  const hasArchived = productions.some((p) => p.is_archived);
+  const productionOptions = productions
+    .filter((p) => showArchived || !p.is_archived)
+    .map((p) => ({
+      value: p.name,
+      label: p.name + (p.is_archived ? " (archived)" : ""),
+    }));
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-background text-foreground">
@@ -59,6 +83,27 @@ export function Layout() {
               placeholder="Select production…"
               emptyText="No productions found."
             />
+            {hasArchived && (
+              <div className="grid grid-cols-2 gap-0.5 rounded-md border border-border bg-background/40 p-0.5">
+                {[
+                  { value: false, label: "Active" },
+                  { value: true, label: "All" },
+                ].map((o) => (
+                  <button
+                    key={String(o.value)}
+                    type="button"
+                    onClick={() => setShowArchivedPref(o.value)}
+                    className={`rounded px-2 py-1 text-[11px] transition-colors ${
+                      showArchived === o.value
+                        ? "bg-primary/90 font-medium text-primary-foreground"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {o.label}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <nav className="flex flex-col gap-0.5 overflow-y-auto px-3 pb-3">
@@ -136,6 +181,7 @@ export function Layout() {
           </div>
         </main>
       </div>
+      <CommandPalette />
     </div>
   );
 }

@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { PencilIcon, Trash2Icon } from "lucide-react";
+import { PencilIcon, SlidersHorizontalIcon, Trash2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/PageHeader";
 import { RefreshButton } from "@/components/RefreshButton";
+import { EmptyState } from "@/components/EmptyState";
 import {
   Dialog,
   DialogContent,
@@ -640,7 +641,15 @@ export function Profiles() {
             <CardTitle>Saved profiles</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
-            {profiles.length === 0 && <p className="text-sm text-muted-foreground/70">No profiles yet.</p>}
+            {profiles.length === 0 && (
+              <EmptyState
+                compact
+                icon={SlidersHorizontalIcon}
+                title="No profiles yet"
+                hint="Create your first transcode preset below."
+                action={null}
+              />
+            )}
             {profiles.map((p) => (
               <div key={p.name} className="flex flex-1 basis-72 flex-col rounded-lg border border-border bg-background/60 px-3 py-2">
                 <div className="flex items-center justify-between">

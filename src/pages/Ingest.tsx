@@ -1,10 +1,11 @@
 import { useEffect, useId, useState } from "react";
-import { CheckIcon } from "lucide-react";
+import { CheckIcon, Usb } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/PageHeader";
 import { RefreshButton } from "@/components/RefreshButton";
+import { EmptyState } from "@/components/EmptyState";
 import { Combobox } from "@/components/ui/combobox";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
@@ -144,9 +145,16 @@ export function Ingest() {
         </CardHeader>
         <CardContent className="space-y-3">
           {volumes.length === 0 && (
-            <p className="text-sm text-muted-foreground">
-              {showAll ? "No volumes found." : "No card readers found."}
-            </p>
+            <EmptyState
+              compact
+              icon={Usb}
+              title={showAll ? "No volumes found" : "No card readers found"}
+              hint={
+                showAll
+                  ? "Nothing is mounted on this machine right now."
+                  : "Insert a card reader, then refresh."
+              }
+            />
           )}
           <div className="grid grid-cols-4 gap-3">
             {volumes.map((v) => {
