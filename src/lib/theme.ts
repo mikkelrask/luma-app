@@ -69,14 +69,12 @@ async function osAccentCode(): Promise<number | null> {
   }
 }
 
-export async function applyTheme(): Promise<void> {
-  const pref = getThemePref();
-  const dark = pref === "dark" || (pref === "system" && (await osTheme()) === "dark");
-  const root = document.documentElement;
-  root.classList.toggle("dark", dark);
-  root.classList.toggle("light", !dark);
+let lastAccent: { code: number | null; dark: boolean } | null = null;
 
-  const code = await osAccentCode();
+function applyAccent(code: number | null, dark: boolean): void {
+  const root = document.documentElement;
+  if (lastAccent && lastAccent.code === code && lastAccent.dark === dark) return;
+  lastAccent = { code, dark };
   const accent = code !== null ? ACCENTS[code] : undefined;
   if (accent) {
     const hex = dark ? accent.dark : accent.light;
@@ -86,10 +84,23 @@ export async function applyTheme(): Promise<void> {
       "--primary-foreground",
       luminance(hex) > 0.62 ? "#1c1c1e" : "#ffffff",
     );
+  } else {
+    root.style.removeProperty("--primary");
+    root.style.removeProperty("--ring");
+    root.style.removeProperty("--primary-foreground");
   }
 }
 
-/** Re-apply when the OS theme or accent changes (theme change, focus, wake). */
+export async function applyTheme(): Promise<void> {
+  const pref = getThemePref();
+  const dark = pref === "dark" || (pref === "system" && (await osTheme()) === "dark");
+  const root = document.documentElement;
+  root.classList.toggle("dark", dark);
+  root.classList.toggle("light", !dark);
+  applyAccent(await osAccentCode(), dark);
+}
+
+/** Re-apply when the OS theme or accent changes (theme event, focus, wake, poll). */
 export function installSystemListeners(): () => void {
   const cleanups: Array<() => void> = [];
   let raf = 0;
@@ -97,12 +108,18 @@ export function installSystemListeners(): () => void {
     cancelAnimationFrame(raf);
     raf = requestAnimationFrame(() => void applyTheme());
   };
-  const themeUnlisten = getCurrentWindow().onThemeChanged(schedule);
-  const focusUnlisten = getCurrentWindow().onFocusChanged(({ payload }) => {
-    if (payload === true) schedule();
-  });
-  void themeUnlisten.then((fn) => cleanups.push(fn));
-  void focusUnlisten.then((fn) => cleanups.push(fn));
+  try {
+    const themeUnlisten = getCurrentWindow().onThemeChanged(schedule);
+    const focusUnlisten = getCurrentWindow().onFocusChanged(({ payload }) => {
+      if (payload === true) schedule();
+    });
+    void themeUnlisten.then((fn) => cleanups.push(fn));
+    void focusUnlisten.then((fn) => cleanups.push(fn));
+  } catch {
+    // Not inside a Tauri window (plain browser dev).
+  }
+  const poll = window.setInterval(() => void applyTheme(), 2000);
+  cleanups.push(() => window.clearInterval(poll));
   return () => {
     cleanups.forEach((fn) => fn?.());
     cancelAnimationFrame(raf);

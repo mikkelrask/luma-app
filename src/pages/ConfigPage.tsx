@@ -35,7 +35,18 @@ export function ConfigPage() {
   const [accent, setAccent] = useState<{ code: number; name: string } | null>(null);
 
   useEffect(() => {
-    void detectAccent().then(setAccent);
+    let last = -2;
+    const check = async () => {
+      const a = await detectAccent();
+      const code = a ? a.code : -2;
+      if (code !== last) {
+        last = code;
+        setAccent(a);
+      }
+    };
+    void check();
+    const t = window.setInterval(check, 2000);
+    return () => window.clearInterval(t);
   }, []);
 
   const themeOptions: Array<{ value: ThemePref; label: string }> = [
