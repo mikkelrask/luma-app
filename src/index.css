@@ -1,44 +1,82 @@
 @import "tailwindcss";
-@import "@fontsource-variable/inter";
-@import "@fontsource-variable/manrope";
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * The app follows the macOS appearance: `.dark` / `.light` are toggled on
+ * <html> by the OS setting (unless the user overrides in Settings). `--primary`
+ * / `--ring` are overridden at runtime with the user's macOS accent color.
+ */
 :root,
 .dark {
-  --background: oklch(0.145 0.006 62); /* warm graphite */
-  --foreground: oklch(0.955 0.004 62);
-  --card: oklch(0.185 0.008 62);
-  --card-foreground: oklch(0.955 0.004 62);
-  --popover: oklch(0.21 0.009 62);
-  --popover-foreground: oklch(0.955 0.004 62);
-  --primary: oklch(0.94 0.004 90);
-  --primary-foreground: oklch(0.16 0.01 90);
-  --highlight: oklch(0.76 0.008 90); /* neutral kicker tone */
+  --background: oklch(0.152 0.004 248);
+  --foreground: oklch(0.955 0.004 248);
+  --card: oklch(0.198 0.007 248);
+  --card-foreground: oklch(0.955 0.004 248);
+  --popover: oklch(0.222 0.008 248);
+  --popover-foreground: oklch(0.955 0.004 248);
+  --primary: #0a84ff; /* default fallback; overridden with the OS accent */
+  --primary-foreground: #ffffff;
+  --highlight: oklch(0.72 0.02 255); /* neutral kicker tone */
   --highlight-foreground: oklch(0.98 0 0);
-  --secondary: oklch(0.255 0.009 62);
-  --secondary-foreground: oklch(0.965 0.004 62);
-  --muted: oklch(0.24 0.008 62);
-  --muted-foreground: oklch(0.655 0.012 62);
-  --accent: oklch(0.26 0.008 62);
-  --accent-foreground: oklch(0.97 0.003 62);
-  --destructive: oklch(0.64 0.2 25);
+  --secondary: oklch(0.262 0.008 248);
+  --secondary-foreground: oklch(0.965 0.004 248);
+  --muted: oklch(0.244 0.007 248);
+  --muted-foreground: oklch(0.655 0.014 248);
+  --accent: oklch(0.27 0.009 248);
+  --accent-foreground: oklch(0.97 0.003 248);
+  --destructive: oklch(0.62 0.2 27);
   --border: oklch(1 0 0 / 0.09);
-  --input: oklch(1 0 0 / 0.13);
-  --ring: oklch(0.94 0.004 90);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
+  --input: oklch(1 0 0 / 0.14);
+  --ring: #0a84ff;
+  --chart-1: oklch(0.6 0.12 255);
+  --chart-2: oklch(0.65 0.12 150);
+  --chart-3: oklch(0.7 0.12 80);
+  --chart-4: oklch(0.62 0.13 310);
+  --chart-5: oklch(0.6 0.12 25);
   --radius: 0.7rem;
+  --scrollbar: rgb(255 255 255 / 0.2);
+  --scrollbar-hover: rgb(255 255 255 / 0.3);
+  color-scheme: dark;
+}
+
+.light {
+  --background: oklch(0.965 0.004 250);
+  --foreground: oklch(0.21 0.012 250);
+  --card: oklch(0.995 0.001 250);
+  --card-foreground: oklch(0.21 0.012 250);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.21 0.012 250);
+  --primary: #007aff; /* default fallback; overridden with the OS accent */
+  --primary-foreground: #ffffff;
+  --highlight: oklch(0.5 0.045 255); /* neutral kicker tone */
+  --highlight-foreground: oklch(0.16 0.02 255);
+  --secondary: oklch(0.93 0.005 250);
+  --secondary-foreground: oklch(0.24 0.012 250);
+  --muted: oklch(0.935 0.005 250);
+  --muted-foreground: oklch(0.5 0.02 250);
+  --accent: oklch(0.92 0.005 250);
+  --accent-foreground: oklch(0.22 0.012 250);
+  --destructive: oklch(0.58 0.22 27);
+  --border: oklch(0.18 0.012 250 / 0.12);
+  --input: oklch(0.18 0.012 250 / 0.18);
+  --ring: #007aff;
+  --chart-1: oklch(0.55 0.12 255);
+  --chart-2: oklch(0.6 0.12 150);
+  --chart-3: oklch(0.65 0.12 80);
+  --chart-4: oklch(0.57 0.13 310);
+  --chart-5: oklch(0.55 0.12 25);
+  --radius: 0.7rem;
+  --scrollbar: rgb(0 0 0 / 0.26);
+  --scrollbar-hover: rgb(0 0 0 / 0.38);
+  color-scheme: light;
 }
 
 @theme {
-  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system,
-    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --font-display: "Manrope Variable", "Inter Variable", ui-sans-serif, system-ui,
-    sans-serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue",
+    "Segoe UI", Roboto, Arial, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
+    "Helvetica Neue", "Segoe UI", Roboto, Arial, sans-serif;
 }
 
 @theme inline {
@@ -79,8 +117,6 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: var(--font-sans);
-    font-feature-settings: "cv11", "ss01";
     background-image:
       radial-gradient(
         1100px 560px at 16% -14%,
@@ -98,6 +134,7 @@
         transparent 70%
       );
     background-repeat: no-repeat;
+    -webkit-font-smoothing: antialiased;
   }
   h1,
   h2,
@@ -124,13 +161,13 @@
     inset: -60%;
     z-index: 70;
     pointer-events: none;
-    opacity: 0.035;
+    opacity: 0.03;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
     animation: grain 1.2s steps(4) infinite;
   }
 
-  /* Soft vignette to pull focus toward the center of the frame. */
-  body::after {
+  /* Soft vignette (dark mode only; light mode gets a whisper of one). */
+  html.dark body::after {
     content: "";
     position: fixed;
     inset: 0;
@@ -140,6 +177,18 @@
       135% 105% at 50% 0%,
       transparent 58%,
       rgb(0 0 0 / 0.28) 100%
+    );
+  }
+  html.light body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 65;
+    pointer-events: none;
+    background: radial-gradient(
+      135% 105% at 50% 0%,
+      transparent 62%,
+      rgb(0 0 0 / 0.06) 100%
     );
   }
 }
@@ -176,16 +225,16 @@ body,
   background: transparent;
 }
 *::-webkit-scrollbar-thumb {
-  background: color-mix(in oklab, var(--foreground) 18%, transparent);
+  background: var(--scrollbar);
   border: 3px solid transparent;
   border-radius: 999px;
   background-clip: padding-box;
 }
 *::-webkit-scrollbar-thumb:hover {
-  background: color-mix(in oklab, var(--foreground) 30%, transparent);
+  background: var(--scrollbar-hover);
   background-clip: padding-box;
 }
 * {
   scrollbar-width: thin;
-  scrollbar-color: color-mix(in oklab, var(--foreground) 18%, transparent) transparent;
+  scrollbar-color: var(--scrollbar) transparent;
 }

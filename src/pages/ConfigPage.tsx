@@ -9,6 +9,7 @@ import { PathListPicker } from "@/components/ui/path-list-picker";
 import { FieldHint } from "@/components/ui/field-hint";
 import { useLumaJob } from "../lib/useLumaJob";
 import { runLuma } from "../lib/luma";
+import { detectAccent, getThemePref, setThemePref, type ThemePref } from "../lib/theme";
 
 interface ConfigData {
   roots?: string[];
@@ -30,6 +31,18 @@ export function ConfigPage() {
   const [dropbox, setDropbox] = useState("");
   const [proxyPath, setProxyPath] = useState("");
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [themePref, setTheme] = useState<ThemePref>(getThemePref);
+  const [accent, setAccent] = useState<{ code: number; name: string } | null>(null);
+
+  useEffect(() => {
+    void detectAccent().then(setAccent);
+  }, []);
+
+  const themeOptions: Array<{ value: ThemePref; label: string }> = [
+    { value: "system", label: "System" },
+    { value: "light", label: "Light" },
+    { value: "dark", label: "Dark" },
+  ];
 
   const load = async () => {
     setLoadError(null);
@@ -92,6 +105,50 @@ export function ConfigPage() {
           {loadError}
         </div>
       )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Appearance</CardTitle>
+          <CardDescription>Follows macOS by default, including your accent color.</CardDescription>
+        </CardHeader>
+        <CardContent className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label>Theme</Label>
+            <div className="grid grid-cols-3 gap-1 rounded-lg border border-border bg-background/40 p-1">
+              {themeOptions.map((o) => (
+                <button
+                  key={o.value}
+                  type="button"
+                  onClick={() => {
+                    setTheme(o.value);
+                    setThemePref(o.value);
+                  }}
+                  className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
+                    themePref === o.value
+                      ? "bg-primary font-medium text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+            <FieldHint>System matches the macOS appearance setting</FieldHint>
+          </div>
+          <div className="space-y-2">
+            <Label>Accent color</Label>
+            <div className="flex items-center gap-2.5 rounded-lg border border-border bg-background/40 px-3 py-2">
+              <span
+                className="size-4 rounded-full shadow-[inset_0_0_0_1px_rgba(0,0,0,0.2)]"
+                style={{ background: "var(--primary)" }}
+              />
+              <span className="text-sm">{accent ? accent.name : "Blue"}</span>
+              <span className="ml-auto text-xs text-muted-foreground/70">from macOS</span>
+            </div>
+            <FieldHint>Change it in System Settings → Appearance</FieldHint>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

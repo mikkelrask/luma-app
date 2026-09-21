@@ -160,6 +160,23 @@ fn kill_all_luma(state: State<'_, ChildState>) -> StatusPayload {
     }
 }
 
+/// Read the user's macOS accent color selection.
+///
+/// Returns `AppleAccentColor` as stored in the global defaults domain:
+/// `0` blue, `1` purple, `2` pink, `3` red, `4` orange, `5` yellow, `6` green,
+/// `-1` graphite. Returns `None` when unset (default blue) or on non-macOS.
+#[tauri::command]
+fn os_accent() -> Option<i64> {
+    let out = std::process::Command::new("defaults")
+        .args(["read", "-g", "AppleAccentColor"])
+        .output()
+        .ok()?;
+    if !out.status.success() {
+        return None;
+    }
+    String::from_utf8_lossy(&out.stdout).trim().parse::<i64>().ok()
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -171,7 +188,13 @@ pub fn run() {
         .manage(ChildState {
             active: Mutex::new(HashMap::new()),
         })
-        .invoke_handler(tauri::generate_handler![run_luma, kill_luma, luma_running, kill_all_luma])
+        .invoke_handler(tauri::generate_handler![
+            run_luma,
+            kill_luma,
+            luma_running,
+            kill_all_luma,
+            os_accent
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

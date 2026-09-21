@@ -1,4 +1,6 @@
 import { HashRouter, Routes, Route } from "react-router-dom";
+import { useEffect } from "react";
+import { applyTheme, installSystemListeners } from "./lib/theme";
 import { JobsProvider } from "./lib/jobs";
 import { SessionProvider } from "./lib/session";
 import { Layout } from "./components/Layout";
@@ -12,6 +14,11 @@ import { Profiles } from "./pages/Profiles";
 import { ConfigPage } from "./pages/ConfigPage";
 
 function App() {
+  useEffect(() => {
+    void applyTheme();
+    return installSystemListeners();
+  }, []);
+
   return (
     <HashRouter>
       <ErrorBoundary>
