@@ -15,7 +15,8 @@ export type JobKind =
   | "reports"
   | "create"
   | "config"
-  | "profiles";
+  | "profiles"
+  | "transforms";
 
 export type JobStatus = "running" | "done" | "error" | "cancelled";
 
