@@ -12,10 +12,10 @@
   --card-foreground: oklch(0.955 0.004 62);
   --popover: oklch(0.21 0.009 62);
   --popover-foreground: oklch(0.955 0.004 62);
-  --primary: oklch(0.72 0.11 214);
-  --primary-foreground: oklch(0.14 0.02 214);
-  --highlight: oklch(0.8 0.13 78); /* warm film-lab amber */
-  --highlight-foreground: oklch(0.16 0.03 78);
+  --primary: oklch(0.94 0.004 90);
+  --primary-foreground: oklch(0.16 0.01 90);
+  --highlight: oklch(0.76 0.008 90); /* neutral kicker tone */
+  --highlight-foreground: oklch(0.98 0 0);
   --secondary: oklch(0.255 0.009 62);
   --secondary-foreground: oklch(0.965 0.004 62);
   --muted: oklch(0.24 0.008 62);
@@ -25,7 +25,7 @@
   --destructive: oklch(0.64 0.2 25);
   --border: oklch(1 0 0 / 0.09);
   --input: oklch(1 0 0 / 0.13);
-  --ring: oklch(0.72 0.11 214);
+  --ring: oklch(0.94 0.004 90);
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
@@ -83,18 +83,18 @@
     font-feature-settings: "cv11", "ss01";
     background-image:
       radial-gradient(
-        1000px 520px at 12% -10%,
-        color-mix(in oklab, var(--primary) 10%, transparent),
-        transparent 62%
+        1100px 560px at 16% -14%,
+        color-mix(in oklab, var(--foreground) 3%, transparent),
+        transparent 60%
       ),
       radial-gradient(
-        900px 460px at 92% -8%,
-        color-mix(in oklab, var(--highlight) 7%, transparent),
-        transparent 55%
+        880px 480px at 90% -10%,
+        color-mix(in oklab, var(--highlight) 5%, transparent),
+        transparent 58%
       ),
       radial-gradient(
-        760px 600px at 50% 120%,
-        color-mix(in oklab, var(--primary) 5%, transparent),
+        760px 560px at 50% 120%,
+        color-mix(in oklab, var(--foreground) 2.5%, transparent),
         transparent 70%
       );
     background-repeat: no-repeat;

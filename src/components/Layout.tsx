@@ -117,7 +117,7 @@ export function Layout() {
 
           <div className="border-t border-border px-4 py-3">
             <div className="flex items-center gap-2.5 rounded-lg border border-white/[0.06] bg-white/[0.02] px-2.5 py-2">
-              <span className="size-1.5 shrink-0 rounded-full bg-emerald-400 shadow-[0_0_8px_2px_rgba(52,211,153,0.45)]" />
+              <span className="size-1.5 shrink-0 rounded-full bg-foreground/70 shadow-[0_0_8px_2px_rgba(255,255,255,0.2)]" />
               <div className="min-w-0">
                 <p className="truncate text-[10px] font-medium text-muted-foreground">
                   pipeline online

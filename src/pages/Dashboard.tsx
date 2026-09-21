@@ -43,23 +43,23 @@ const groupMeta: Record<
   active: {
     label: "Active",
     icon: Film,
-    accent: "text-emerald-300",
-    dot: "bg-emerald-400 shadow-[0_0_8px_2px_rgba(52,211,153,0.5)]",
-    rule: "from-emerald-400/60",
+    accent: "text-foreground",
+    dot: "bg-foreground shadow-[0_0_8px_2px_rgba(255,255,255,0.25)]",
+    rule: "from-foreground/50",
   },
   upcoming: {
     label: "Upcoming",
     icon: Clock,
-    accent: "text-amber-300",
-    dot: "bg-amber-400 shadow-[0_0_8px_2px_rgba(251,191,36,0.5)]",
-    rule: "from-amber-400/60",
+    accent: "text-muted-foreground",
+    dot: "bg-muted-foreground/70",
+    rule: "from-muted-foreground/40",
   },
   archived: {
     label: "Archived",
     icon: Archive,
-    accent: "text-muted-foreground",
-    dot: "bg-white/30",
-    rule: "from-white/25",
+    accent: "text-muted-foreground/60",
+    dot: "bg-white/20",
+    rule: "from-white/20",
   },
 };
 
