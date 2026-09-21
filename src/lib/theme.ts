@@ -14,13 +14,13 @@ interface AccentDef {
 
 const ACCENTS: Record<number, AccentDef> = {
   [-1]: { name: "Graphite", dark: "#98989d", light: "#8e8e93" },
-  0: { name: "Blue", dark: "#0a84ff", light: "#007aff" },
-  1: { name: "Purple", dark: "#bf5af2", light: "#af52de" },
-  2: { name: "Pink", dark: "#ff375f", light: "#ff2d55" },
-  3: { name: "Red", dark: "#ff453a", light: "#ff3b30" },
-  4: { name: "Orange", dark: "#ff9f0a", light: "#ff9500" },
-  5: { name: "Yellow", dark: "#ffd60a", light: "#ffcc00" },
-  6: { name: "Green", dark: "#30d158", light: "#34c759" },
+  0: { name: "Red", dark: "#ff453a", light: "#ff3b30" },
+  1: { name: "Orange", dark: "#ff9f0a", light: "#ff9500" },
+  2: { name: "Yellow", dark: "#ffd60a", light: "#ffcc00" },
+  3: { name: "Green", dark: "#30d158", light: "#34c759" },
+  4: { name: "Blue", dark: "#0a84ff", light: "#007aff" },
+  5: { name: "Purple", dark: "#bf5af2", light: "#af52de" },
+  6: { name: "Pink", dark: "#ff375f", light: "#ff2d55" },
 };
 
 export function getThemePref(): ThemePref {

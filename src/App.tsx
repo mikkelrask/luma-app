@@ -16,7 +16,12 @@ import { ConfigPage } from "./pages/ConfigPage";
 function App() {
   useEffect(() => {
     void applyTheme();
-    return installSystemListeners();
+    const retry = window.setTimeout(() => void applyTheme(), 600);
+    const stop = installSystemListeners();
+    return () => {
+      window.clearTimeout(retry);
+      stop();
+    };
   }, []);
 
   return (
