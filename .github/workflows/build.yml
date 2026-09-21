@@ -95,6 +95,14 @@ jobs:
           # so the whole payload (Python runtime, stdlib, ffmpeg, pango libs)
           # must live there — not next to the executable in Contents/MacOS.
           cp -R src-tauri/binaries/_internal/. "$APP/Contents/Frameworks/"
+          # PDF rendering runs in the dedicated pdfworker bundle (weasyprint
+          # crashes with a SIGBUS in the large sidecar process). Ship it next
+          # to the sidecar launcher; ReportGenerator looks it up at
+          # <sidecar-dir>/pdfworker/<target-triple>/pdfworker, and the worker's
+          # onedir payload lives beside its launcher so its bootloader finds it.
+          mkdir -p "$APP/Contents/MacOS/pdfworker/aarch64-apple-darwin"
+          cp -R src-tauri/binaries/pdfworker/aarch64-apple-darwin/. \
+            "$APP/Contents/MacOS/pdfworker/aarch64-apple-darwin/"
           # The main executable is already ad-hoc linker-signed; signing the
           # sidecar launcher is enough. Never code-sign the whole bundle: it
           # recurses into the payload and fails on the Python.framework layout.
@@ -109,7 +117,15 @@ jobs:
           "$S" --help >/dev/null
           "$S" ingest --help >/dev/null
           "$S" reports --help >/dev/null
-          echo "sidecar smoke OK"
+          # Render a real PDF through the bundled worker to prove font shaping
+          # survives outside the (crashed) big-process path.
+          W="$APP/Contents/MacOS/pdfworker/aarch64-apple-darwin/pdfworker"
+          test -x "$W"
+          mkdir -p sidecar-smoke
+          printf '<html><body><h1>Luma smoke</h1></body></html>' > sidecar-smoke/in.html
+          "$W" sidecar-smoke/in.html sidecar-smoke/out.pdf
+          file sidecar-smoke/out.pdf | grep -qi "PDF document"
+          echo "sidecar smoke OK (PDF ok)"
 
       - name: Free disk space before packaging
         shell: bash
