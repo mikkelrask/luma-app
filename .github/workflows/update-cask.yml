@@ -11,10 +11,6 @@ jobs:
       contents: read
     if: ${{ !github.event.release.draft }}
     steps:
-      - name: Skip when no tap PAT configured
-        if: ${{ secrets.TAP_PAT == '' }}
-        run: echo "::warning::TAP_PAT secret is not configured; cask update skipped."
-
       - name: Compute version and sha256 of the release zip
         id: sha
         env:
@@ -25,13 +21,16 @@ jobs:
           echo "sha256=$(shasum -a 256 luma.zip | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
 
       - name: Update cask in tap
-        if: ${{ secrets.TAP_PAT != '' }}
         env:
           TAP_PAT: ${{ secrets.TAP_PAT }}
           VERSION: ${{ steps.sha.outputs.version }}
           SHA256: ${{ steps.sha.outputs.sha256 }}
         run: |
           set -euo pipefail
+          if [[ -z "${TAP_PAT:-}" ]]; then
+            echo "::warning::TAP_PAT secret is not configured; cask update skipped."
+            exit 0
+          fi
           git clone "https://github.com/mikkelrask/homebrew-luma.git" tap
           cd tap
           python3 - <<'PY'
