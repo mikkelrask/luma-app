@@ -26,13 +26,19 @@ because the frozen `luma` CLI is the only backend surface the app talks to.
    frozen form (see below), push the backend, then bump the pinned commit in the
    parent and update the frontend.
 3. **Frontend next.** `npm run build` (runs `tsc`) must be green before commit.
-4. **Commit + push.** The user stages changes themselves and asks for the commit.
-   Always rebase onto `origin/main` (or rebase the branch) before pushing —
-   direct pushes are rejected otherwise. Never force-push.
-5. **Never edit INI by hand** (`config.ini`, `profiles.ini`, production INIs):
+4. **Small logical commits.** Split work into small, focused commits (one logical
+   unit each: a bugfix, a feature slice, a doc change — not a whole feature dump
+   or mixed concerns). Write a concise message that matches the repo style and
+   references the issue number.
+5. **PR per feature.** After committing, push the branch and open a PR
+   (`gh pr create`) targeting `main` with `Closes #<issue>`. Always rebase onto
+   `origin/main` (or rebase the branch) before pushing — direct pushes to `main`
+   are rejected otherwise. Never force-push. Land the PR via merge, not by
+   pushing to `main` directly.
+6. **Never edit INI by hand** (`config.ini`, `profiles.ini`, production INIs):
    always route through `luma config` / `luma profiles` / `luma create` / the
    in-app pages.
-6. Close an issue only after its acceptance criteria are proven (usually by the
+7. Close an issue only after its acceptance criteria are proven (usually by the
    merged PR that implements it).
 
 ## Sidecar plumbing (what you'd otherwise get wrong)
