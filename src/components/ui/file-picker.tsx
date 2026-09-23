@@ -1,4 +1,5 @@
 import { open } from "@tauri-apps/plugin-dialog";
+import { Folder } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "cn";
@@ -38,9 +39,12 @@ export function FilePicker({
         variant="outline"
         type="button"
         onClick={browse}
+        size={directory ? "icon" : "default"}
         className="shrink-0"
+        aria-label={directory ? "Choose folder" : undefined}
+        title={directory ? "Choose folder" : undefined}
       >
-        {directory ? "Choose folder…" : "Browse…"}
+        {directory ? <Folder aria-hidden="true" /> : "Browse…"}
       </Button>
     </div>
   );

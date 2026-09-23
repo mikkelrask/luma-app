@@ -1,4 +1,5 @@
 import { open } from "@tauri-apps/plugin-dialog";
+import { FolderPlus } from "lucide-react"
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "cn";
@@ -47,9 +48,12 @@ export function PathListPicker({
           variant="outline"
           type="button"
           onClick={addPaths}
+          size={directory ? "icon" : "default"}
           className="shrink-0"
+          aria-label={directory ? "Add folder" : undefined}
+          title={directory ? "Add folder" : undefined}
         >
-          {directory ? "Add folder…" : "Add file…"}
+          {directory ? <FolderPlus aria-hidden="true" /> : "Add file…"}
         </Button>
       </div>
       {value.length > 0 && (
