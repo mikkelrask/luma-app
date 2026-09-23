@@ -3,6 +3,7 @@ import { NavLink, Outlet } from "react-router-dom";
 import { PageHeader } from "@/components/PageHeader";
 import { RefreshButton } from "@/components/RefreshButton";
 import { runLuma } from "@/lib/luma";
+import { libraryTabs } from "@/lib/nav";
 
 export interface Profile {
   name: string;
@@ -52,12 +53,6 @@ export function useLibrary(): LibraryValue {
   if (!ctx) throw new Error("useLibrary must be used within Library");
   return ctx;
 }
-
-const TABS = [
-  { to: "/library/profiles", label: "Profiles" },
-  { to: "/library/transforms", label: "Transforms" },
-  { to: "/library/luts", label: "LUTs" },
-];
 
 export function Library() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -115,7 +110,7 @@ return (
         )}
 
         <div className="flex w-fit gap-1 rounded-lg border border-border bg-background/40 p-1">
-          {TABS.map((t) => (
+          {libraryTabs.map((t) => (
             <NavLink
               key={t.to}
               to={t.to}
