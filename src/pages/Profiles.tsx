@@ -524,7 +524,7 @@ function CreateProfileDialog({
     {
       progress: false,
       kind: "profiles",
-      label: `Create profile · ${c.form.name || "Unnamed"}`,
+      label: `Add profile · ${c.form.name || "Unnamed"}`,
     },
   );
 
@@ -541,7 +541,7 @@ function CreateProfileDialog({
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create profile</DialogTitle>
+          <DialogTitle>Add profile</DialogTitle>
           <DialogDescription>
             Saved transcode settings the Create page can reuse.
           </DialogDescription>
@@ -557,7 +557,7 @@ function CreateProfileDialog({
             Cancel
           </Button>
           <Button onClick={handleCreate} disabled={createJob.ui.running || !c.form.name}>
-            {createJob.ui.running ? "Creating…" : "Create profile"}
+            {createJob.ui.running ? "Creating…" : "Add profile"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -656,7 +656,7 @@ function AddTransformDialog({
     {
       progress: false,
       kind: "transforms",
-      label: `Create transform · ${name || "Unnamed"}`,
+      label: `Add transform · ${name || "Unnamed"}`,
     },
   );
 
@@ -753,7 +753,7 @@ function AddTransformDialog({
             Cancel
           </Button>
           <Button onClick={handleCreate} disabled={createJob.ui.running || !valid}>
-            {createJob.ui.running ? "Creating…" : "Create transform"}
+            {createJob.ui.running ? "Creating…" : "Add transform"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -853,7 +853,7 @@ export function Profiles() {
             <div className="flex items-center justify-between gap-2">
               <CardTitle>Profiles</CardTitle>
               <Button variant="outline" size="sm" onClick={() => setProfileDialogOpen(true)}>
-                <PlusIcon className="size-4" /> Create profile
+                <PlusIcon className="size-4" /> Add profile
               </Button>
             </div>
           </CardHeader>
