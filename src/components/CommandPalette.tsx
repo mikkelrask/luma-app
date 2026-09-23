@@ -1,18 +1,9 @@
 import { useEffect, useState, type ComponentType } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  Archive,
-  Clock,
-  Film,
-  Flame,
-  HardDrive,
-  LayoutDashboard,
-  RefreshCcw,
-  Settings,
-  SlidersHorizontal,
-} from "lucide-react";
+import { Archive, Film } from "lucide-react";
 import { useProductions } from "@/lib/useProductions";
 import { useSession } from "@/lib/session";
+import { navSections, libraryTabs } from "@/lib/nav";
 import {
   CommandDialog,
   CommandEmpty,
@@ -91,58 +82,25 @@ export function CommandPalette() {
       action: () => pick(p.name),
     }));
 
+  const toPaletteItem = (i: (typeof navSections)[number]["items"][number]): PaletteItem => ({
+    value: i.to,
+    label: i.label,
+    keywords: i.keywords ? [i.keywords] : [],
+    icon: i.icon,
+    action: () => go(i.to),
+  });
+
+  const navGroups: PaletteGroup[] = navSections.map((section) => ({
+    heading: section.label,
+    items: [
+      ...section.items.map(toPaletteItem),
+      ...(section.id === "library" ? libraryTabs.map(toPaletteItem) : []),
+    ],
+  }));
+
   const groups: PaletteGroup[] = [
-    {
-      heading: "Pages",
-      items: [
-        {
-          value: "dashboard overview home",
-          label: "Dashboard",
-          icon: LayoutDashboard,
-          action: () => go("/"),
-        },
-        {
-          value: "ingest card volumes media",
-          label: "Ingest",
-          icon: HardDrive,
-          action: () => go("/ingest"),
-        },
-        {
-          value: "transcode dailies proxies",
-          label: "Transcode",
-          icon: RefreshCcw,
-          action: () => go("/transcode"),
-        },
-        {
-          value: "reports pdf ingest",
-          label: "Reports",
-          icon: Clock,
-          action: () => go("/reports"),
-        },
-        {
-          value: "create production add new show",
-          label: "Add Production",
-          icon: Flame,
-          action: () => go("/create"),
-        },
-        {
-          value: "profiles presets codecs",
-          label: "Profiles",
-          icon: SlidersHorizontal,
-          action: () => go("/profiles"),
-        },
-        {
-          value: "settings config appearance paths",
-          label: "Settings",
-          icon: Settings,
-          action: () => go("/config"),
-        },
-      ],
-    },
-    {
-      heading: "Work on",
-      items: productionItems,
-    },
+    ...navGroups,
+    { heading: "Work on", items: productionItems },
   ];
 
   return (

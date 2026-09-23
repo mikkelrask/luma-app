@@ -6,39 +6,12 @@ import { TaskPanel } from "@/components/TaskPanel";
 import { TitleBar } from "@/components/TitleBar";
 import { CommandPalette } from "@/components/CommandPalette";
 import { useJobs } from "@/lib/jobs";
-import type { JobKind } from "@/lib/jobs";
 import { useProductions } from "@/lib/useProductions";
 import { useSession } from "@/lib/session";
 import { Combobox } from "@/components/ui/combobox";
+import { navSections } from "@/lib/nav";
 
 const SHOW_ARCHIVED_KEY = "luma.sidebar.showArchived";
-
-interface NavLinkDef {
-  to: string;
-  label: string;
-  end?: boolean;
-  kind?: JobKind | "any";
-}
-
-const navSections: Array<{ label?: string; links: NavLinkDef[] }> = [
-  {
-    label: "Work",
-    links: [
-      { to: "/", label: "Dashboard", end: true, kind: "any" },
-      { to: "/ingest", label: "Ingest", kind: "ingest" },
-      { to: "/transcode", label: "Transcode", kind: "transcode" },
-      { to: "/reports", label: "Reports", kind: "reports" }
-    ],
-  },
-  {
-    label: "Manage",
-    links: [
-      { to: "/create", label: "Add Production", kind: "create" },
-      { to: "/profiles", label: "Profiles", kind: "profiles" },
-      { to: "/config", label: "Settings", kind: "config" },
-    ],
-  },
-];
 
 function VersionBadge() {
   const [version, setVersion] = useState<string>(packageJson.version);
@@ -130,18 +103,18 @@ export function Layout() {
 
           <nav className="flex flex-col gap-0.5 overflow-y-auto px-3 pb-3">
             {navSections.map((section) => (
-              <div key={section.label ?? "top"} className="flex flex-col gap-0.5">
-                {section.label && (
-                  <div className="flex items-center gap-2 px-4 pb-1 pt-4">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground/60">
-                      {section.label}
-                    </p>
-                    <span className="h-px flex-1 bg-gradient-to-r from-white/10 to-transparent" />
-                  </div>
-                )}
-                {section.links.map((l) => {
+              <div key={section.id} className="flex flex-col gap-0.5">
+                <div className="flex items-center gap-2 px-4 pb-1 pt-4">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground/60">
+                    {section.label}
+                  </p>
+                  <span className="h-px flex-1 bg-gradient-to-r from-white/10 to-transparent" />
+                </div>
+                {section.items.map((l) => {
                   const running =
-                    l.kind === "any" ? hasActive() : l.kind ? hasActive(l.kind) : false;
+                    l.kinds === "any"
+                      ? hasActive()
+                      : (l.kinds ?? []).some((k) => hasActive(k));
                   return (
                     <NavLink
                       key={l.to}
