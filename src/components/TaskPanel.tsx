@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { cn } from "cn";
 import {
   Ban,
   ChevronDown,
@@ -12,7 +11,6 @@ import {
   Layers,
   Repeat2,
   Settings2,
-  Terminal,
   Trash2,
   UserCog,
   X,
@@ -132,28 +130,8 @@ function LogConsole() {
   );
 }
 
-function DebugToggle() {
-  const { debug, toggleDebug } = useJobs();
-  return (
-    <button
-      type="button"
-      onClick={toggleDebug}
-      className={cn(
-        "flex items-center gap-1.5 rounded-md px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide transition-colors focus:outline-none",
-        debug
-          ? "bg-primary/15 text-primary"
-          : "text-muted-foreground/70 hover:bg-white/[0.04] hover:text-foreground",
-      )}
-      title="Log raw backend output for every job"
-    >
-      <Terminal className="size-3" />
-      {debug ? "Debug on" : "Debug off"}
-    </button>
-  );
-}
-
 export function TaskPanel() {
-  const { running, history, orphans, killAllOrphans, clearHistory, debug } = useJobs();
+  const { running, history, orphans, killAllOrphans, clearHistory, debug, logStream } = useJobs();
   const [showRecent, setShowRecent] = useState(true);
 
   return (
@@ -162,8 +140,13 @@ export function TaskPanel() {
         <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
           Tasks
         </span>
-        <DebugToggle />
       </div>
+
+      {!debug && logStream.length > 0 && (
+        <p className="px-1 text-[10px] text-muted-foreground/60">
+          Debug logging is off — enable it in Settings › Advanced.
+        </p>
+      )}
 
       {orphans && (
         <div className="flex items-center justify-between gap-2 rounded-lg border border-amber-800/60 bg-amber-950/40 px-2 py-1.5 text-[10px] text-amber-300">
