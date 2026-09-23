@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { cn } from "cn";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/PageHeader";
@@ -10,6 +11,7 @@ import { PathListPicker } from "@/components/ui/path-list-picker";
 import { FieldHint } from "@/components/ui/field-hint";
 import { useLumaJob } from "../lib/useLumaJob";
 import { runLuma } from "../lib/luma";
+import { useJobs } from "@/lib/jobs";
 import { detectAccent, getThemePref, setThemePref, type ThemePref } from "../lib/theme";
 
 interface ConfigData {
@@ -23,6 +25,7 @@ interface ConfigData {
 }
 
 export function ConfigPage() {
+  const { debug, toggleDebug } = useJobs();
   const [loaded, setLoaded] = useState(false);
   const [roots, setRoots] = useState<string[]>([]);
   const [template, setTemplate] = useState("");
@@ -251,6 +254,38 @@ export function ConfigPage() {
               placeholder="/path/to/reports"
             />
             <FieldHint>Where ingest PDF and JSON reports are saved</FieldHint>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Advanced</CardTitle>
+          <CardDescription>Debug and diagnostics</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between gap-4">
+            <div className="space-y-1">
+              <Label>Debug logging</Label>
+              <FieldHint>Raw backend NDJSON is shown in the task console while enabled.</FieldHint>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={debug}
+              onClick={toggleDebug}
+              className={cn(
+                "relative h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors focus:outline-none",
+                debug ? "bg-primary" : "bg-border",
+              )}
+            >
+              <span
+                className={cn(
+                  "absolute left-0.5 top-0.5 size-5 rounded-full bg-foreground transition-transform",
+                  debug && "translate-x-5",
+                )}
+              />
+            </button>
           </div>
         </CardContent>
       </Card>
