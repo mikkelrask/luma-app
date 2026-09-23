@@ -3,7 +3,7 @@ import { cn } from "cn";
 import { CropIcon, PencilIcon, PlusIcon, SlidersHorizontalIcon, Trash2Icon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/PageHeader";
 import { RefreshButton } from "@/components/RefreshButton";
 import { EmptyState } from "@/components/EmptyState";
@@ -511,7 +511,13 @@ function ProfileFields({ c }: { c: ProfileForm }) {
   );
 }
 
-function CreateProfileCard({ onCreated }: { onCreated: () => void }) {
+function CreateProfileDialog({
+  onClose,
+  onCreated,
+}: {
+  onClose: () => void;
+  onCreated: () => void;
+}) {
   const c = useProfileForm(null);
   const createJob = useLumaJob(
     () => c.buildArgs(c.form.name),
@@ -524,29 +530,38 @@ function CreateProfileCard({ onCreated }: { onCreated: () => void }) {
 
   const handleCreate = async () => {
     await createJob.run((s) => {
-      if (!s.error) c.reset();
+      if (!s.error) {
+        onCreated();
+        onClose();
+      }
     });
-    onCreated();
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Create profile</CardTitle>
-        <CardDescription>Saved transcode settings the Create page can reuse</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <ProfileFields c={c} />
-      </CardContent>
-      <Card className="mx-5 mb-5 flex flex-row items-center gap-2 border-0 bg-transparent p-0 shadow-none">
-        <Button variant="default" className="flex-1" onClick={handleCreate} disabled={createJob.ui.running || !c.form.name}>
-          {createJob.ui.running ? "Creating…" : "Create"}
-        </Button>
-      </Card>
-      {createJob.ui.error && (
-        <div className="mx-5 mb-5 rounded-md border border-red-700 bg-red-950/40 p-3 text-sm text-red-300">{createJob.ui.error}</div>
-      )}
-    </Card>
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Create profile</DialogTitle>
+          <DialogDescription>
+            Saved transcode settings the Create page can reuse.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="max-h-[60vh] overflow-y-auto pr-1">
+          <ProfileFields c={c} />
+        </div>
+        {createJob.ui.error && (
+          <div className="rounded-md border border-red-700 bg-red-950/40 p-3 text-sm text-red-300">{createJob.ui.error}</div>
+        )}
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={createJob.ui.running}>
+            Cancel
+          </Button>
+          <Button onClick={handleCreate} disabled={createJob.ui.running || !c.form.name}>
+            {createJob.ui.running ? "Creating…" : "Create profile"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -755,6 +770,7 @@ export function Profiles() {
   const [refreshing, setRefreshing] = useState(false);
   const [transformsRefreshing, setTransformsRefreshing] = useState(false);
   const [transformDialogOpen, setTransformDialogOpen] = useState(false);
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
 
   const load = async () => {
     setRefreshing(true);
@@ -815,6 +831,10 @@ export function Profiles() {
     loadTransforms();
   };
 
+  const refreshAll = async () => {
+    await Promise.all([load(), loadTransforms()]);
+  };
+
   const renderValue = (v: unknown) =>
     v === null || v === undefined || v === "" ? "—" : String(v);
 
@@ -822,15 +842,20 @@ export function Profiles() {
     <div className="space-y-6">
       <PageHeader
         kicker="Manage"
-        title="Profiles"
+        title="Profiles & Transforms"
         description="Reusable transcode presets for dailies and proxies."
-        actions={<RefreshButton onRefresh={load} loading={refreshing} />}
+        actions={<RefreshButton onRefresh={refreshAll} loading={refreshing || transformsRefreshing} />}
       />
 
       <div className="space-y-4">
         <Card>
           <CardHeader>
-            <CardTitle>Saved profiles</CardTitle>
+            <div className="flex items-center justify-between gap-2">
+              <CardTitle>Profiles</CardTitle>
+              <Button variant="outline" size="sm" onClick={() => setProfileDialogOpen(true)}>
+                <PlusIcon className="size-4" /> Create profile
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
             {profiles.length === 0 && (
@@ -838,7 +863,7 @@ export function Profiles() {
                 compact
                 icon={SlidersHorizontalIcon}
                 title="No profiles yet"
-                hint="Create your first transcode preset below."
+                hint="Create your first transcode preset."
                 action={null}
               />
             )}
@@ -879,12 +904,9 @@ export function Profiles() {
           <CardHeader>
             <div className="flex items-center justify-between gap-2">
               <CardTitle>Visual transforms</CardTitle>
-              <div className="flex items-center gap-2">
-                <RefreshButton onRefresh={loadTransforms} loading={transformsRefreshing} label="Refresh transforms" />
-                <Button variant="outline" size="sm" onClick={() => setTransformDialogOpen(true)}>
-                  <PlusIcon className="size-4" /> Add transform
-                </Button>
-              </div>
+              <Button variant="outline" size="sm" onClick={() => setTransformDialogOpen(true)}>
+                <PlusIcon className="size-4" /> Add transform
+              </Button>
             </div>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
@@ -893,7 +915,7 @@ export function Profiles() {
                 compact
                 icon={CropIcon}
                 title="No visual transforms yet"
-                hint="Add letterbox or zoom presets above — no manual INI edits."
+                hint="Add a letterbox or zoom preset — no manual INI edits."
                 action={null}
               />
             )}
@@ -919,8 +941,7 @@ export function Profiles() {
           </CardContent>
         </Card>
 
-        <CreateProfileCard onCreated={load} />
-      </div>
+        </div>
 
       <Dialog open={deleteName !== ""} onOpenChange={(open) => { if (!open) setDeleteName(""); }}>
         <DialogContent>
@@ -973,6 +994,13 @@ export function Profiles() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {profileDialogOpen && (
+        <CreateProfileDialog
+          onClose={() => setProfileDialogOpen(false)}
+          onCreated={refreshAll}
+        />
+      )}
 
       {transformDialogOpen && (
         <AddTransformDialog
