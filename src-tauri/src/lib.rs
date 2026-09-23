@@ -1,8 +1,10 @@
 use std::collections::HashMap;
+use std::path::Path;
 use std::sync::Mutex;
 
 use serde_json::Value;
 use tauri::{AppHandle, Emitter, Manager, State};
+use tauri_plugin_opener::OpenerExt;
 use tauri_plugin_shell::process::{CommandChild, CommandEvent};
 use tauri_plugin_shell::ShellExt;
 
@@ -177,6 +179,81 @@ fn os_accent() -> Option<i64> {
     String::from_utf8_lossy(&out.stdout).trim().parse::<i64>().ok()
 }
 
+/// Whether `target` is the `root` itself or a path inside it.
+///
+/// Both sides are canonicalized first, so symlinks are followed and `..`
+/// components are resolved before the prefix check. `target == root` also
+/// passes (used when opening the reports directory itself).
+fn is_within_reports_root(root: &Path, target: &Path) -> bool {
+    match (root.canonicalize(), target.canonicalize()) {
+        (Ok(root), Ok(target)) => target.starts_with(root),
+        _ => false,
+    }
+}
+
+/// Resolve the configured reports root from a trusted source: the luma
+/// sidecar (`luma --json config`). This includes the "Reports sibling of the
+/// configs parent" fallback the CLI applies, and is not supplied by the
+/// renderer, so a compromised caller cannot widen the root it is validated
+/// against. Returns the root as a canonical absolute path.
+async fn resolve_reports_root(app: &AppHandle) -> Result<String, String> {
+    let sidecar = app
+        .shell()
+        .sidecar("luma-sidecar")
+        .map_err(|e| format!("Failed to locate luma sidecar: {e}"))?;
+    let output = sidecar
+        .args(["--json", "config"])
+        .output()
+        .await
+        .map_err(|e| format!("Failed to read luma config: {e}"))?;
+    if !output.status.success() {
+        return Err(format!(
+            "Failed to read luma config (exit {:?}): {}",
+            output.status.code(),
+            String::from_utf8_lossy(&output.stderr).trim()
+        ));
+    }
+    let reports = String::from_utf8_lossy(&output.stdout)
+        .lines()
+        .rev()
+        .find_map(|line| {
+            serde_json::from_str::<Value>(line)
+                .ok()
+                .and_then(|value| {
+                    value
+                        .get("reports")
+                        .and_then(|reports| reports.as_str())
+                        .map(str::to_string)
+                })
+        })
+        .unwrap_or_default();
+    if reports.trim().is_empty() {
+        return Err("Reports directory is not configured.".to_string());
+    }
+    Ok(reports.trim().to_string())
+}
+
+/// Open a report file (or the reports directory) in the default application.
+///
+/// The reports root is runtime-configured (from `luma config`) and may live on
+/// a mounted production volume outside the user's home, so it can't be
+/// pre-scoped into the opener plugin's IPC ACL. The target is validated
+/// against the root resolved from the trusted luma CLI (not from the caller)
+/// and opened host-side, where the plugin's path scope does not apply.
+/// Denies anything outside the reports root.
+#[tauri::command]
+async fn open_reports_path(app: AppHandle, path: String) -> Result<(), String> {
+    let reports_root = resolve_reports_root(&app).await?;
+    if !is_within_reports_root(Path::new(&reports_root), Path::new(&path)) {
+        return Err(format!(
+            "Refusing to open '{path}': not inside the reports directory ({reports_root})."
+        ));
+    }
+    app.opener()
+        .open_path(path, None::<&str>)
+        .map_err(|e| format!("Failed to open path: {e}"))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -193,8 +270,44 @@ pub fn run() {
             kill_luma,
             luma_running,
             kill_all_luma,
-            os_accent
+            os_accent,
+            open_reports_path
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::is_within_reports_root;
+    use std::fs;
+    use std::path::PathBuf;
+
+    fn temp_root(nonce: &str) -> PathBuf {
+        let dir = std::env::temp_dir().join(format!("luma-reports-{nonce}-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(dir.join("sub")).unwrap();
+        fs::write(dir.join("sub").join("report.pdf"), b"x").unwrap();
+        dir
+    }
+
+    #[test]
+    fn containment_accepts_root_and_descendants() {
+        let root = temp_root("in");
+        assert!(is_within_reports_root(&root, &root));
+        assert!(is_within_reports_root(&root, &root.join("sub")));
+        assert!(is_within_reports_root(&root, &root.join("sub").join("report.pdf")));
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn containment_rejects_outside_and_missing_paths() {
+        let root = temp_root("in2");
+        let outside = temp_root("out");
+        assert!(!is_within_reports_root(&root, &outside));
+        assert!(!is_within_reports_root(&root, &outside.join("sub").join("report.pdf")));
+        assert!(!is_within_reports_root(&root, &root.join("sub").join("missing.pdf")));
+        let _ = fs::remove_dir_all(&root);
+        let _ = fs::remove_dir_all(&outside);
+    }
 }
