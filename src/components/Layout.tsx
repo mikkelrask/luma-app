@@ -1,5 +1,7 @@
+import { getVersion } from "@tauri-apps/api/app";
 import { NavLink, Outlet } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import packageJson from "../../package.json";
 import { TaskPanel } from "@/components/TaskPanel";
 import { TitleBar } from "@/components/TitleBar";
 import { CommandPalette } from "@/components/CommandPalette";
@@ -10,6 +12,26 @@ import { Combobox } from "@/components/ui/combobox";
 import { navSections } from "@/lib/nav";
 
 const SHOW_ARCHIVED_KEY = "luma.sidebar.showArchived";
+
+function VersionBadge() {
+  const [version, setVersion] = useState<string>(packageJson.version);
+
+  useEffect(() => {
+    let cancelled = false;
+    getVersion()
+      .then((v) => {
+        if (!cancelled) setVersion(v);
+      })
+      .catch(() => {
+        // Plain-browser dev (no Tauri runtime): keep the package.json fallback.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return <span className="ml-auto font-mono text-[9px] text-muted-foreground/40">v{version}</span>;
+}
 
 export function Layout() {
   const { hasActive } = useJobs();
@@ -144,7 +166,7 @@ export function Layout() {
                   digital imaging workflow
                 </p>
               </div>
-              <span className="ml-auto font-mono text-[9px] text-muted-foreground/40">v0.1.0</span>
+              <VersionBadge />
             </div>
           </div>
         </aside>
