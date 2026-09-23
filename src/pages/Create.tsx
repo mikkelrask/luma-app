@@ -279,7 +279,9 @@ export function Create() {
               {proxyMode === "custom"
                 ? `Custom path — kept as selected; editing the title or season resets to the auto-derived path`
                 : proxyMode === "none"
-                  ? "Proxy location cleared — no --proxy-path will be sent"
+                  ? proxyBase
+                    ? `Cleared — no --proxy-path sent; day folders will use the Settings base path: ${proxyBase}`
+                    : "Cleared — no proxy path configured, so no day folders will be created"
                   : proxyBase
                     ? slug
                       ? `Auto-derived from settings proxy_path + folder name: ${suggestion}`
