@@ -105,7 +105,7 @@ export function Reports() {
     try {
       await openPath(target);
     } catch (e) {
-      setOpenError(e instanceof Error ? e.message : `Could not open ${target}.`);
+      setOpenError(errMessage(e, `Could not open ${target}.`));
     }
   };
 
@@ -114,9 +114,16 @@ export function Reports() {
     try {
       await openPath(list.reports_root);
     } catch (e) {
-      setOpenError(e instanceof Error ? e.message : "Could not open the reports directory.");
+      setOpenError(errMessage(e, "Could not open the reports directory."));
     }
   };
+
+  const errMessage = (e: unknown, fallback: string) =>
+    e instanceof Error
+      ? e.message
+      : typeof e === "string"
+        ? e
+        : (e as { message?: string } | null)?.message ?? fallback;
 
   return (
     <div className="space-y-6">
