@@ -94,11 +94,15 @@ export function useLumaJob(buildArgs: () => string[], opts: boolean | LumaJobOpt
 
     const res = await handle.done;
     const ok = !res.code || res.code === 0;
+    const payloadError =
+      !ok && res.payload && typeof res.payload.error === "string"
+        ? (res.payload.error as string)
+        : null;
     const finalState: JobUiState = {
       running: false,
       message: "",
       pct: 100,
-      error: ok ? null : res.logs.join("\n") || "Job failed",
+      error: ok ? null : payloadError || res.logs.join("\n") || "Job failed",
       result: res.payload,
     };
 
