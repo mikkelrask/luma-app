@@ -114,11 +114,16 @@ export function Create() {
       ? `${proxyBase.replace(/[\\/]+$/, "")}/${slug}`
       : proxyBase
     : "";
-  const proxyPath = proxyOverride ?? suggestion;
+  const proxyPath = proxyOverride === null ? suggestion : proxyOverride;
+  const proxyMode = proxyOverride === null ? "auto" : proxyOverride === "" ? "none" : "custom";
 
   const handleProxyChange = (value: string) => {
-    setProxyOverride(value === suggestion || value === "" ? null : value);
+    setProxyOverride(value === suggestion ? null : value);
   };
+
+  useEffect(() => {
+    setProxyOverride((prev) => (prev === null || prev === "" ? prev : null));
+  }, [name, season]);
 
   const handleLutChange = async (value: string) => {
     if (value === LUT_BROWSE) {
@@ -271,11 +276,15 @@ export function Create() {
               placeholder="/path/to/proxy"
             />
             <FieldHint>
-              {proxyBase
-                ? slug
-                  ? `Auto-derived from settings proxy_path + folder name: ${suggestion}`
-                  : `Base path from settings (type a production name to append the folder-name slug)`
-                : "No proxy_path set in Settings"}
+              {proxyMode === "custom"
+                ? `Custom path — kept as selected; editing the title or season resets to the auto-derived path`
+                : proxyMode === "none"
+                  ? "Proxy location cleared — no --proxy-path will be sent"
+                  : proxyBase
+                    ? slug
+                      ? `Auto-derived from settings proxy_path + folder name: ${suggestion}`
+                      : `Base path from settings (type a production name to append the folder-name slug)`
+                    : "No proxy_path set in Settings"}
             </FieldHint>
           </div>
           <div className="space-y-2">
