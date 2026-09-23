@@ -191,22 +191,62 @@ fn is_within_reports_root(root: &Path, target: &Path) -> bool {
     }
 }
 
+/// Resolve the configured reports root from a trusted source: the luma
+/// sidecar (`luma --json config`). This includes the "Reports sibling of the
+/// configs parent" fallback the CLI applies, and is not supplied by the
+/// renderer, so a compromised caller cannot widen the root it is validated
+/// against. Returns the root as a canonical absolute path.
+async fn resolve_reports_root(app: &AppHandle) -> Result<String, String> {
+    let sidecar = app
+        .shell()
+        .sidecar("luma-sidecar")
+        .map_err(|e| format!("Failed to locate luma sidecar: {e}"))?;
+    let output = sidecar
+        .args(["--json", "config"])
+        .output()
+        .await
+        .map_err(|e| format!("Failed to read luma config: {e}"))?;
+    if !output.status.success() {
+        return Err(format!(
+            "Failed to read luma config (exit {:?}): {}",
+            output.status.code(),
+            String::from_utf8_lossy(&output.stderr).trim()
+        ));
+    }
+    let reports = String::from_utf8_lossy(&output.stdout)
+        .lines()
+        .rev()
+        .find_map(|line| {
+            serde_json::from_str::<Value>(line)
+                .ok()
+                .and_then(|value| {
+                    value
+                        .get("reports")
+                        .and_then(|reports| reports.as_str())
+                        .map(str::to_string)
+                })
+        })
+        .unwrap_or_default();
+    if reports.trim().is_empty() {
+        return Err("Reports directory is not configured.".to_string());
+    }
+    Ok(reports.trim().to_string())
+}
+
 /// Open a report file (or the reports directory) in the default application.
 ///
 /// The reports root is runtime-configured (from `luma config`) and may live on
 /// a mounted production volume outside the user's home, so it can't be
-/// pre-scoped into the opener plugin's IPC ACL. Instead the frontend passes the
-/// target and the configured root; we validate containment here and open
-/// host-side, where the plugin's path scope does not apply. Denies anything
-/// outside the reports root.
+/// pre-scoped into the opener plugin's IPC ACL. The target is validated
+/// against the root resolved from the trusted luma CLI (not from the caller)
+/// and opened host-side, where the plugin's path scope does not apply.
+/// Denies anything outside the reports root.
 #[tauri::command]
-fn open_reports_path(app: AppHandle, path: String, reports_root: String) -> Result<(), String> {
-    if reports_root.trim().is_empty() {
-        return Err("Reports directory is not configured.".to_string());
-    }
+async fn open_reports_path(app: AppHandle, path: String) -> Result<(), String> {
+    let reports_root = resolve_reports_root(&app).await?;
     if !is_within_reports_root(Path::new(&reports_root), Path::new(&path)) {
         return Err(format!(
-            "Refusing to open '{path}': not inside the reports directory."
+            "Refusing to open '{path}': not inside the reports directory ({reports_root})."
         ));
     }
     app.opener()

@@ -101,10 +101,9 @@ export function Reports() {
   }, []);
 
   const openReport = async (file: ReportFile) => {
-    if (!list?.reports_root) return;
     const target = file.pdf ?? file.json;
     try {
-      await invoke("open_reports_path", { path: target, reportsRoot: list.reports_root });
+      await invoke("open_reports_path", { path: target });
     } catch (e) {
       setOpenError(errMessage(e, `Could not open ${target}.`));
     }
@@ -113,10 +112,7 @@ export function Reports() {
   const openReportsDir = async () => {
     if (!list?.reports_root) return;
     try {
-      await invoke("open_reports_path", {
-        path: list.reports_root,
-        reportsRoot: list.reports_root,
-      });
+      await invoke("open_reports_path", { path: list.reports_root });
     } catch (e) {
       setOpenError(errMessage(e, "Could not open the reports directory."));
     }
