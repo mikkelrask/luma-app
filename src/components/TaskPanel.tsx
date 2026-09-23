@@ -9,6 +9,7 @@ import {
   CropIcon,
   FileText,
   FolderPlus,
+  Layers,
   Repeat2,
   Settings2,
   Terminal,
@@ -26,6 +27,7 @@ const kindIcons: Record<JobKind, typeof Clapperboard> = {
   config: Settings2,
   profiles: UserCog,
   transforms: CropIcon,
+  luts: Layers,
 };
 
 function duration(ms: number) {
