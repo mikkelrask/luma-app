@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { openPath } from "@tauri-apps/plugin-opener";
+import { invoke } from "@tauri-apps/api/core";
 import { FileText, FolderOpen } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -101,9 +101,10 @@ export function Reports() {
   }, []);
 
   const openReport = async (file: ReportFile) => {
+    if (!list?.reports_root) return;
     const target = file.pdf ?? file.json;
     try {
-      await openPath(target);
+      await invoke("open_reports_path", { path: target, reportsRoot: list.reports_root });
     } catch (e) {
       setOpenError(errMessage(e, `Could not open ${target}.`));
     }
@@ -112,7 +113,10 @@ export function Reports() {
   const openReportsDir = async () => {
     if (!list?.reports_root) return;
     try {
-      await openPath(list.reports_root);
+      await invoke("open_reports_path", {
+        path: list.reports_root,
+        reportsRoot: list.reports_root,
+      });
     } catch (e) {
       setOpenError(errMessage(e, "Could not open the reports directory."));
     }
