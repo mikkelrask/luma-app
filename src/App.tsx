@@ -13,6 +13,7 @@ import { Reports } from "./pages/Reports";
 import { Library } from "./pages/Library";
 import { ProfilesTab } from "./pages/library/ProfilesTab";
 import { TransformsTab } from "./pages/library/TransformsTab";
+import { LutsTab } from "./pages/library/LutsTab";
 import { ConfigPage } from "./pages/ConfigPage";
 
 // Nav destinations live in src/lib/nav.ts; this route table stays manual because
@@ -45,6 +46,7 @@ function App() {
                   <Route index element={<Navigate to="/library/profiles" replace />} />
                   <Route path="profiles" element={<ProfilesTab />} />
                   <Route path="transforms" element={<TransformsTab />} />
+                  <Route path="luts" element={<LutsTab />} />
                 </Route>
                 <Route path="/profiles" element={<Navigate to="/library/profiles" replace />} />
                 <Route path="/config" element={<ConfigPage />} />

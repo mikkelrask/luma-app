@@ -39,6 +39,7 @@ export interface Lut {
 interface LibraryValue {
   profiles: Profile[];
   transforms: Transform[];
+  luts: Lut[];
   loading: boolean;
   error: string | null;
   refresh: () => Promise<void>;
@@ -55,11 +56,13 @@ export function useLibrary(): LibraryValue {
 const TABS = [
   { to: "/library/profiles", label: "Profiles" },
   { to: "/library/transforms", label: "Transforms" },
+  { to: "/library/luts", label: "LUTs" },
 ];
 
 export function Library() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [transforms, setTransforms] = useState<Transform[]>([]);
+  const [luts, setLuts] = useState<Lut[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -67,9 +70,10 @@ export function Library() {
     setLoading(true);
     setError(null);
     try {
-      const [pr, tr] = await Promise.all([
+      const [pr, tr, lr] = await Promise.all([
         runLuma(["profiles", "list"], false).then((h) => h.done),
         runLuma(["transforms", "list"], false).then((h) => h.done),
+        runLuma(["luts", "list"], false).then((h) => h.done),
       ]);
       if (pr.code && pr.code !== 0) {
         throw new Error(pr.logs.join("\n") || "Failed to load profiles");
@@ -77,8 +81,12 @@ export function Library() {
       if (tr.code && tr.code !== 0) {
         throw new Error(tr.logs.join("\n") || "Failed to load transforms");
       }
+      if (lr.code && lr.code !== 0) {
+        throw new Error(lr.logs.join("\n") || "Failed to load LUTs");
+      }
       setProfiles((pr.payload as { profiles?: Profile[] })?.profiles ?? []);
       setTransforms((tr.payload as { transforms?: Transform[] })?.transforms ?? []);
+      setLuts((lr.payload as { luts?: Lut[] })?.luts ?? []);
     } catch (e) {
       setError(String(e));
     } finally {
@@ -91,12 +99,12 @@ export function Library() {
   }, [refresh]);
 
 return (
-    <LibraryContext.Provider value={{ profiles, transforms, loading, error, refresh }}>
+    <LibraryContext.Provider value={{ profiles, transforms, luts, loading, error, refresh }}>
       <div className="space-y-6">
         <PageHeader
           kicker="Library"
           title="Library"
-          description="Reusable profiles and visual transforms for the pipeline."
+          description="Reusable profiles, visual transforms and color LUTs for the pipeline."
           actions={<RefreshButton onRefresh={refresh} loading={loading} />}
         />
 
