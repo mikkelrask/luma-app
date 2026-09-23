@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { open } from "@tauri-apps/plugin-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/PageHeader";
@@ -14,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Combobox, type ComboboxOption } from "@/components/ui/combobox";
 import { useLumaJob } from "@/lib/useLumaJob";
 import { runLuma } from "@/lib/luma";
 import { FieldHint } from "@/components/ui/field-hint";
@@ -25,10 +27,13 @@ interface ConfigData {
   profiles?: Array<{ name: string }>;
   transforms?: string[];
   proxy_path?: string;
+  luts?: string[];
 }
 
 const NONE = "__none__";
 const DEFAULT = "__default__";
+const LUT_NONE = "__lut_none__";
+const LUT_BROWSE = "__lut_browse__";
 
 function productionSlug(title: string, season: string): string {
   const slug = title
@@ -102,6 +107,28 @@ export function Create() {
   );
 
   const profileNames = config?.profiles?.map((p) => p.name) ?? [];
+  const inAppLuts = config?.luts ?? [];
+
+  const handleLutChange = async (value: string) => {
+    if (value === LUT_BROWSE) {
+      const selected = await open({
+        multiple: false,
+        filters: [{ name: "LUT files", extensions: ["cube"] }],
+      });
+      if (typeof selected === "string") setLut(selected);
+      return;
+    }
+    setLut(value === LUT_NONE ? "" : value);
+  };
+
+  const lutOptions: ComboboxOption[] = [
+    { value: LUT_NONE, label: "None" },
+    ...inAppLuts.map((name) => ({ value: name, label: name })),
+  ];
+  if (lut && !inAppLuts.includes(lut)) {
+    lutOptions.push({ value: lut, label: lut.split(/[\\/]/).pop() ?? lut });
+  }
+  lutOptions.push({ value: LUT_BROWSE, label: "Browse…" });
 
   const result = ui.result as
     | {
@@ -237,11 +264,12 @@ export function Create() {
           </div>
           <div className="space-y-2">
             <Label>LUT (.cube)</Label>
-            <FilePicker
-              extensions={["cube"]}
-              value={lut}
-              onChange={setLut}
-              placeholder="/path/to/lut.cube"
+            <Combobox
+              value={lut || LUT_NONE}
+              onChange={handleLutChange}
+              options={lutOptions}
+              placeholder="Pick an in-app LUT or browse…"
+              emptyText="No LUTs in the app yet. Use Browse… to import one."
             />
             <FieldHint>Color LUT applied when transcoding dailies</FieldHint>
           </div>
