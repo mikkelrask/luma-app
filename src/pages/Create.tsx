@@ -59,7 +59,8 @@ export function Create() {
   const [weekend, setWeekend] = useState("");
   const [dailies, setDailies] = useState("");
   const [proxy, setProxy] = useState("");
-  const [proxyPath, setProxyPath] = useState("");
+  const [proxyBase, setProxyBase] = useState("");
+  const [proxyOverride, setProxyOverride] = useState<string | null>(null);
   const [lut, setLut] = useState("");
   const [transform, setTransform] = useState("");
   const [config, setConfig] = useState<ConfigData | null>(null);
@@ -75,9 +76,7 @@ export function Create() {
         }
         const payload = (r.payload as ConfigData) ?? null;
         setConfig(payload);
-        if (payload?.proxy_path && !proxyPath) {
-          setProxyPath(payload.proxy_path);
-        }
+        setProxyBase(payload?.proxy_path ?? "");
       })
       .catch((e) => setConfigError(String(e)));
   }, []);
@@ -108,6 +107,18 @@ export function Create() {
 
   const profileNames = config?.profiles?.map((p) => p.name) ?? [];
   const inAppLuts = config?.luts ?? [];
+
+  const slug = name.trim() ? productionSlug(name, season) : "";
+  const suggestion = proxyBase
+    ? slug
+      ? `${proxyBase.replace(/[\\/]+$/, "")}/${slug}`
+      : proxyBase
+    : "";
+  const proxyPath = proxyOverride ?? suggestion;
+
+  const handleProxyChange = (value: string) => {
+    setProxyOverride(value === suggestion || value === "" ? null : value);
+  };
 
   const handleLutChange = async (value: string) => {
     if (value === LUT_BROWSE) {
@@ -177,9 +188,7 @@ export function Create() {
             </div>
             <FieldHint>
               Folder name:{" "}
-              {name.trim()
-                ? productionSlug(name, season)
-                : "—"}
+              {slug || "—"}
             </FieldHint>
           </div>
           <hr className="col-span-2" />
@@ -258,9 +267,16 @@ export function Create() {
             <FilePicker
               directory
               value={proxyPath}
-              onChange={setProxyPath}
+              onChange={handleProxyChange}
               placeholder="/path/to/proxy"
             />
+            <FieldHint>
+              {proxyBase
+                ? slug
+                  ? `Auto-derived from settings proxy_path + folder name: ${suggestion}`
+                  : `Base path from settings (type a production name to append the folder-name slug)`
+                : "No proxy_path set in Settings"}
+            </FieldHint>
           </div>
           <div className="space-y-2">
             <Label>LUT (.cube)</Label>
